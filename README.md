@@ -131,20 +131,21 @@ print(result["response"])
 [Context Engineering](#3--context-engineering-system) •
 [Event System](#4--event-system-plug--play) •
 [MCP Client](#5--built-in-mcp-client) •
-[Local Tools](#6-️-local-tools-system) •
-[Agent Skills](#7--agent-skills-system-packaged-capabilities) •
-[Memory Tool Backend](#8--workspace-memory-file-based-persistence)
+[Deep Agent](#6--deep-agent-autonomous-rpi-workflow) •
+[Local Tools](#7-️-local-tools-system) •
+[Agent Skills](#8--agent-skills-system-packaged-capabilities) •
+[Memory Tool Backend](#9--workspace-memory-file-based-persistence)
 
 **Multi-Agent**:
-[Sub-Agents](#9--sub-agents-system) •
-[Background Agents](#10--background-agents) •
-[Workflows](#11--workflow-agents)
+[Sub-Agents](#10--sub-agents-system) •
+[Background Agents](#11--background-agents) •
+[Workflows](#12--workflow-agents)
 
 **Production**:
-[BM25 Tool Retrieval](#12--advanced-tool-use-bm25-retrieval) •
-[Observability](#13--production-observability--metrics) •
-[Guardrails](#14-️-prompt-injection-guardrails) •
-[Model Support](#15--universal-model-support)
+[BM25 Tool Retrieval](#13--advanced-tool-use-bm25-retrieval) •
+[Observability](#14--production-observability--metrics) •
+[Guardrails](#15-️-prompt-injection-guardrails) •
+[Model Support](#16--universal-model-support)
 
 **Reference**: [Examples](#-examples--cookbook) • [Configuration](#️-configuration) • [Testing](#-testing--development) • [Contributing](#-contributing)
 
@@ -776,7 +777,49 @@ result = await agent.run("List all Python files and get latest commits")
 
 ---
 
-### 6. 🛠️ Local Tools System
+### 6. 🧠 Deep Agent (Autonomous RPI Workflow)
+
+The **Deep Agent** is an advanced extension of OmniCoreAgent designed for complex, multi-step tasks. It combines an autonomous orchestration layer with a structured **RPI (Research, Plan, Implement)** workflow.
+
+#### Key Capabilities
+- **Autonomous Sub-Agents**: The agent decides *on its own* when to spawn helper agents (sync, parallel, or background) to handle sub-tasks.
+- **RPI Workflow**: Built-in methods for `research()`, `plan()`, `implement()`, and `iterate()` to tackle complex objectives systematically.
+- **Persistent Memory**: Automatically enables file-based memory (`/memories/projects/...`) to store research, plans, and progress across sessions.
+- **Project Structure**: Organizes all artifacts into a clean, project-based directory structure.
+
+#### Usage Example
+
+```python
+from omnicoreagent import DeepAgent
+
+# 1. Initialize
+agent = DeepAgent(
+    name="Architect",
+    system_instruction="You are a senior solutions architect.",
+    model_config={"provider": "openai", "model": "gpt-4o"},
+    project_name="cloud_migration_v1"
+)
+
+await agent.initialize()
+
+# 2. Research Phase (Agent may spawn parallel sub-agents)
+# "I need 3 sub-agents to research AWS, Azure, and GCP options..."
+await agent.research("Compare cloud providers for high-frequency trading")
+
+# 3. Plan Phase (Creates detailed implementation plan)
+await agent.plan("Design migration strategy for legacy monolith")
+
+# 4. Implement Phase (Executes plan step-by-step with verification)
+await agent.implement("/memories/projects/cloud_migration_v1/plans/strategy.md")
+
+# 5. Direct Execution (Agent uses its internal tools autonomously)
+# "I'll spawn a background agent to run the load tests..."
+await agent.run("Run load testing suite on the staging environment")
+```
+
+> 💡 **When to Use**: Choose Deep Agent for tasks that require deep thought, extensive research, or breaking down a complex problem into parallel streams of work. It trades speed for thoroughness and reliability.
+
+### 7. 🛠️ Local Tools System
 
 Register any Python function as an AI tool:
 
@@ -806,7 +849,7 @@ agent = OmniCoreAgent(
 
 ---
 
-### 7. 🧩 Agent Skills System (Packaged Capabilities)
+### 8. 🧩 Agent Skills System (Packaged Capabilities)
 
 OmniCoreAgent supports the **Agent Skills** specification — self-contained capability packages that provide specialized knowledge, executable scripts, and documentation.
 
@@ -838,7 +881,7 @@ agent_config = {
 
 ---
 
-### 8. 💾 Workspace Memory (File-Based Persistence)
+### 9. 💾 Workspace Memory (File-Based Persistence)
 
 A **file-based persistent storage system** that gives your agent a local workspace to save and manage files during long-running tasks. Files are stored in a `./memories/` directory with safe concurrent access and path traversal protection.
 
@@ -876,7 +919,7 @@ agent_config = {
 
 ---
 
-### 9. 👥 Sub-Agents System
+### 10. 👥 Sub-Agents System
 
 Delegate tasks to specialized child agents:
 
@@ -895,7 +938,7 @@ parent_agent = OmniCoreAgent(
 
 ---
 
-### 10. 🚁 Background Agents
+### 11. 🕰️ Background Agents
     
 Autonomous agents that run on varying schedules (Interval or Cron) or process tasks from a persistent queue.
     
@@ -1005,7 +1048,7 @@ _Events & Streaming_
 
 ---
 
-### 11. 🔄 Workflow Agents
+### 12. 🔄 Workflow Agents
 
 Orchestrate multiple agents for complex tasks:
 
@@ -1038,7 +1081,7 @@ result = await router.run(task="Find and summarize AI research")
 
 ---
 
-### 12. 🧠 Advanced Tool Use (BM25 Retrieval)
+### 13. 🧠 Advanced Tool Use (BM25 Retrieval)
 
 Automatically discover relevant tools at runtime using BM25 lexical search:
 
@@ -1060,7 +1103,7 @@ agent_config = {
 
 ---
 
-### 13. 📊 Production Observability & Metrics
+### 14. 📊 Production Observability & Metrics
 
 #### 📈 Real-time Usage Metrics
 OmniCoreAgent tracks every token, request, and millisecond. Each `run()` returns a `metric` object, and you can get cumulative stats anytime.
@@ -1101,7 +1144,7 @@ Agent Execution Trace:
 ---
 
 
-### 14. 🛡️ Prompt Injection Guardrails
+### 15. 🛡️ Prompt Injection Guardrails
 
 Protect your agents against malicious inputs, jailbreaks, and instruction overrides before they reach the LLM.
 
@@ -1147,7 +1190,7 @@ agent = OmniCoreAgent(..., agent_config=agent_config)
 
 ---
 
-### 15. 🌐 Universal Model Support
+### 16. 🌐 Universal Model Support
 
 
 Model-agnostic through LiteLLM — use any provider:

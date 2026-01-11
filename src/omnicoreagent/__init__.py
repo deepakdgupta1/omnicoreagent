@@ -27,6 +27,8 @@ from .omni_agent.workflow.parallel_agent import ParallelAgent
 from .omni_agent.workflow.sequential_agent import SequentialAgent
 from .omni_agent.workflow.router_agent import RouterAgent
 
+from .omni_agent.deep_agent import DeepAgent
+
 __all__ = [
     "ReactAgent",
     "MemoryRouter",
@@ -46,6 +48,7 @@ __all__ = [
     "ParallelAgent",
     "SequentialAgent",
     "RouterAgent",
+    "DeepAgent",
     "MCPClient",
     "Configuration",
 ]
