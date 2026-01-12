@@ -180,9 +180,7 @@ class BaseReactAgent:
                     agent_name=self.agent_name,
                 )
                 if event_router:
-                    self.background_task_manager.run_background_strict(
-                        event_router(session_id=session_id, event=event)
-                    )
+                    await event_router(session_id=session_id, event=event)
 
             tool_calls = []
             tool_call_blocks = []
@@ -421,6 +419,14 @@ class BaseReactAgent:
             local_tools = await self.process_local_tools(
                 local_tools=local_tools, local_tool_verification=True
             )
+
+            if not parsed_response.data:
+                return ToolError(
+                    observation="Invalid tool call request: No data provided",
+                    tool_name="unknown",
+                    tool_args={}
+                )
+
             actions = json.loads(parsed_response.data)
             if not isinstance(actions, list):
                 actions = [actions]
@@ -765,9 +771,7 @@ class BaseReactAgent:
                 agent_name=self.agent_name,
             )
             if event_router:
-                self.background_task_manager.run_background_strict(
-                    event_router(session_id=session_id, event=event)
-                )
+                await event_router(session_id=session_id, event=event)
 
             await add_message_to_history(
                 role="assistant",
