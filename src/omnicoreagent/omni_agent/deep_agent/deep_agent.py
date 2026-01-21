@@ -230,6 +230,12 @@ class DeepAgent:
         """Disconnect MCP servers."""
         if self._agent:
             await self._agent.cleanup_mcp_servers()
+
+    async def list_all_available_tools(self):
+        """List all available tools."""
+        if self._agent:
+            return await self._agent.list_all_available_tools()
+        return []
     
     @property
     def is_initialized(self) -> bool:
