@@ -67,13 +67,15 @@ class SubagentFactory:
 
         Subagents get full config but with some adjustments:
         - Fewer max_steps (focused task)
-        - memory_tool_backend always local
+        - Inherit parent's memory_tool_backend
         """
         config = self.agent_config.copy()
 
         config["max_steps"] = min(config.get("max_steps", 15), 15)
 
-        config["memory_tool_backend"] = "local"
+        # Inherit parent's memory_tool_backend (default to local if not set)
+        if "memory_tool_backend" not in config:
+            config["memory_tool_backend"] = "local"
 
         return config
 
@@ -160,6 +162,32 @@ When you have completed your investigation:
             response = result.get("response", str(result)) or ""
             if not isinstance(response, str):
                 response = str(response)
+
+            # Check for error indicators in the response
+            error_indicators = [
+                "model encountered an error",
+                "error occurred",
+                "failed to",
+                "unable to complete",
+                "retry again",
+            ]
+            response_lower = response.lower()
+            is_error = any(indicator in response_lower for indicator in error_indicators)
+            
+            # Also check if response is empty or too short
+            is_error = is_error or len(response.strip()) < 10
+
+            if is_error:
+                logger.warning(f"Subagent '{name}' returned an error response")
+                return {
+                    "status": "error",
+                    "data": {
+                        "subagent_name": name,
+                        "output_path": output_path,
+                        "error": response[:500] if len(response) > 500 else response,
+                    },
+                    "message": f"Subagent '{name}' encountered an error: {response[:100]}",
+                }
 
             logger.info(f"Subagent '{name}' completed task")
 

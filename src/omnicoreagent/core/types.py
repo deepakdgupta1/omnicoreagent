@@ -27,7 +27,7 @@ class AgentConfig(BaseModel):
 
     memory_tool_backend: str | None = Field(
         default=None,
-        description="Backend for memory tool. Options: 'local', 's3', 'db'",
+        description="Backend for memory tool. Options: 'local', 's3', 'r2'",
     )
 
     enable_agent_skills: bool = Field(
@@ -63,11 +63,12 @@ class AgentConfig(BaseModel):
     def validate_backend(cls, v):
         if v is None:
             return v
-        allowed = {"local", "s3", "db"}
+        allowed = {"local", "s3", "r2"}
         if v not in allowed:
             raise ValueError(
                 f"Invalid memory_tool_backend '{v}'. Must be one of {allowed}."
             )
+        return v
         return v
 
     @field_validator("request_limit", "total_tokens_limit", mode="before")

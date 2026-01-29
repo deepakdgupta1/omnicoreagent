@@ -1,59 +1,86 @@
+"""
+Memory Tool that delegates all operations to a backend
+implementing AbstractMemoryBackend.
+"""
+
+from typing import Union
 from omnicoreagent.core.tools.local_tools_registry import ToolRegistry
 from omnicoreagent.core.tools.memory_tool.base import AbstractMemoryBackend
 from omnicoreagent.core.tools.memory_tool.local_storage import LocalMemoryBackend
+from omnicoreagent.core.tools.memory_tool.factory import create_memory_backend
 
 
 class MemoryTool:
     """
-    Memory Tool that delegates all operations to a backend
-    implementing AbstractMemoryBackend.
+    Memory Tool that delegates all operations to a backend.
+    
+    Usage:
+        # From string (uses environment variables for cloud backends)
+        memory_tool = MemoryTool(backend="local")
+        memory_tool = MemoryTool(backend="s3")
+        memory_tool = MemoryTool(backend="r2")
+        
+        # Direct backend injection
+        memory_tool = MemoryTool(backend=my_custom_backend)
     """
 
-    def __init__(self, backend: AbstractMemoryBackend):
+    def __init__(self, backend: Union[AbstractMemoryBackend, str] = None):
+        """
+        Initialize MemoryTool with a backend.
+        
+        Args:
+            backend: Either:
+                - A string ("local", "s3", "r2") - creates backend from env vars
+                - An AbstractMemoryBackend instance (direct injection)
+                - None - defaults to local backend
+        """
         if isinstance(backend, str):
-            if backend == "local":
-                backend = LocalMemoryBackend()
-
-        self.backend = backend
+            self.backend = create_memory_backend(backend)
+        elif isinstance(backend, AbstractMemoryBackend):
+            self.backend = backend
+        else:
+            # Default to local
+            self.backend = LocalMemoryBackend()
 
     def view(self, path: str | None = None) -> str:
-        if self.backend:
-            return self.backend.view(path)
+        """Show directory listing or file contents."""
+        return self.backend.view(path)
 
     def create_update(self, path: str, file_text: str, mode: str = "create") -> str:
-        if self.backend:
-            return self.backend.create_update(path, file_text, mode)
+        """Create, append, or overwrite a file."""
+        return self.backend.create_update(path, file_text, mode)
 
     def str_replace(self, path: str, old_str: str, new_str: str) -> str:
-        if self.backend:
-            return self.backend.str_replace(path, old_str, new_str)
+        """Replace all occurrences of old_str with new_str in a file."""
+        return self.backend.str_replace(path, old_str, new_str)
 
     def insert(self, path: str, insert_line: int, insert_text: str) -> str:
-        if self.backend:
-            return self.backend.insert(path, insert_line, insert_text)
+        """Insert text at a specific line number in a file."""
+        return self.backend.insert(path, insert_line, insert_text)
 
     def delete(self, path: str) -> str:
-        if self.backend:
-            return self.backend.delete(path)
+        """Delete a file or directory."""
+        return self.backend.delete(path)
 
     def rename(self, old_path: str, new_path: str) -> str:
-        if self.backend:
-            return self.backend.rename(old_path, new_path)
+        """Rename or move a file/directory."""
+        return self.backend.rename(old_path, new_path)
 
     def clear_all_memory(self) -> str:
-        if self.backend:
-            return self.backend.clear_all_memory()
+        """Clear all memory storage."""
+        return self.backend.clear_all_memory()
 
 
 def build_tool_registry_memory_tool(
-    memory_tool_backend: str, registry: ToolRegistry
+    memory_tool_backend: Union[AbstractMemoryBackend, str],
+    registry: ToolRegistry,
 ) -> ToolRegistry:
     """
     Register memory tool commands in a ToolRegistry.
 
-    Each command provides safe, controlled file system interactions inside a dedicated
-    "memories" directory. Tools are designed to be descriptive, explicit, and prevent
-    accidental destructive actions.
+    Args:
+        memory_tool_backend: Either a string ("local", "s3", "r2") or backend instance
+        registry: ToolRegistry to register commands with
     """
     memory_tool = MemoryTool(backend=memory_tool_backend)
 
@@ -67,7 +94,7 @@ def build_tool_registry_memory_tool(
         
         Why it exists:
         - Helps the agent explore the memory structure before writing or modifying anything.
-        - Essential for context gathering (what files exist, what’s inside them).
+        - Essential for context gathering (what files exist, what's inside them).
         """,
         inputSchema={
             "type": "object",

@@ -21,4 +21,5 @@ memories/
 .omnicoreagent_config/*
 .omnicoreagent_artifacts/*
 .agents/skills/*
+omnistudio/web/node_modules/*
 

@@ -116,6 +116,7 @@ to investigate in parallel, then synthesize their findings with cross-cutting in
         mcp_tools=mcp_tools,
         agent_config={
             "max_steps": 100,  # Increased for deep RPI+ with real search
+            "memory_tool_backend": "r2",
         },
         debug=True,
     )

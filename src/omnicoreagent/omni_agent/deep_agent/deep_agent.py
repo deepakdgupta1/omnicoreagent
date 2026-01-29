@@ -138,7 +138,9 @@ class DeepAgent:
                 else:
                     config[key] = value
 
-        config["memory_tool_backend"] = "local"
+        # config["memory_tool_backend"] = "local"
+        if "memory_tool_backend" not in config:
+            config["memory_tool_backend"] = "local"
 
         return config
 

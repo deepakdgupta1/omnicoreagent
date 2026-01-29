@@ -110,8 +110,9 @@ print(result["response"])
 | Feature | What It Means For You |
 |---------|----------------------|
 | **Runtime Backend Switching** | Switch Redis ↔ MongoDB ↔ PostgreSQL without restarting |
+| **Cloud Workspace Storage** | Agent files persist in AWS S3 or Cloudflare R2 ⚡ NEW |
 | **Context Engineering** | Session memory + agent loop context + tool offloading = no token exhaustion |
-| **Tool Response Offloading** | Large tool outputs saved to files, 98% token savings ⚡ NEW |
+| **Tool Response Offloading** | Large tool outputs saved to files, 98% token savings |
 | **Built-in Guardrails** | Prompt injection protection out of the box |
 | **MCP Native** | Connect to any MCP server (stdio, SSE, HTTP with OAuth) |
 | **Background Agents** | Schedule autonomous tasks that run on intervals |
@@ -134,7 +135,7 @@ print(result["response"])
 [Deep Agent](#6--deep-agent-autonomous-rpi-workflow) •
 [Local Tools](#7-️-local-tools-system) •
 [Agent Skills](#8--agent-skills-system-packaged-capabilities) •
-[Memory Tool Backend](#9--workspace-memory-file-based-persistence)
+[Workspace Memory (S3/R2/Local)](#9--workspace-memory--persistent-file-storage-for-agents)
 
 **Multi-Agent**:
 [Sub-Agents](#10--sub-agents-system) •
@@ -918,41 +919,128 @@ agent_config = {
 
 ---
 
-### 9. 💾 Workspace Memory (File-Based Persistence)
+### 9. 💾 Workspace Memory — Persistent File Storage for Agents
 
-A **file-based persistent storage system** that gives your agent a local workspace to save and manage files during long-running tasks. Files are stored in a `./memories/` directory with safe concurrent access and path traversal protection.
+> **NEW: Cloud Storage Support!** Your agents can now store files on **AWS S3** or **Cloudflare R2** for production-grade, distributed persistence.
+
+A **persistent file storage system** that gives your agents a dedicated workspace to save, manage, and share files across sessions. Choose from local filesystem for development, or cloud storage (S3/R2) for production deployments where files need to persist across servers, scale globally, and survive restarts.
+
+#### Storage Backends
+
+| Backend | Use Case | Benefits |
+|---------|----------|----------|
+| `local` | Development, single-server | Zero config, instant setup |
+| `s3` | Production, AWS infrastructure | Scalable, durable, global access |
+| `r2` | Production, edge computing | Zero egress fees, Cloudflare ecosystem |
+
+#### Quick Setup
 
 ```python
+# Local storage (development)
 agent_config = {
-    "memory_tool_backend": "local"  # Enable file-based memory
+    "memory_tool_backend": "local"
 }
 
-# Agent automatically gets these tools:
-# - memory_view: View/list files in memory directory
-# - memory_create_update: Create new files or append/overwrite existing ones
-# - memory_str_replace: Find and replace text within files
-# - memory_insert: Insert text at specific line numbers
-# - memory_delete: Delete files from memory
-# - memory_rename: Rename or move files
-# - memory_clear_all: Clear entire memory directory
+# AWS S3 storage (production)
+agent_config = {
+    "memory_tool_backend": "s3"
+}
+
+# Cloudflare R2 storage (production)
+agent_config = {
+    "memory_tool_backend": "r2"
+}
 ```
 
-**How It Works**:
-- Files stored in `./memories/` directory (auto-created)
-- Thread-safe with file locking for concurrent access
-- Path traversal protection for security
-- Persists across agent restarts
+#### Environment Variables
 
-**Use Cases**:
-| Use Case | Description |
-|----------|-------------|
-| **Long-running workflows** | Save progress as agent works through complex tasks |
-| **Resumable tasks** | Continue where you left off after interruption |
-| **Multi-step planning** | Agent can save plans, execute, and update |
-| **Code generation** | Save code incrementally, run tests, iterate |
-| **Data processing** | Store intermediate results between steps |
+**For S3:**
+```bash
+AWS_S3_BUCKET=my-agent-memories
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=your-secret
+AWS_REGION=us-east-1  # optional, defaults to us-east-1
+```
 
-**Example**: A code generation agent can save its plan to memory, write code incrementally, run tests, and resume if interrupted.
+**For R2:**
+```bash
+R2_BUCKET_NAME=my-agent-memories
+R2_ACCOUNT_ID=your-cloudflare-account-id
+R2_ACCESS_KEY_ID=your-r2-key
+R2_SECRET_ACCESS_KEY=your-r2-secret
+```
+
+#### Agent Memory Tools
+
+When enabled, your agent automatically gets these tools:
+
+| Tool | Purpose |
+|------|---------|
+| `memory_view` | View/list files in memory workspace |
+| `memory_create_update` | Create, append, or overwrite files |
+| `memory_str_replace` | Find and replace text within files |
+| `memory_insert` | Insert text at specific line numbers |
+| `memory_delete` | Delete files from workspace |
+| `memory_rename` | Rename or move files |
+| `memory_clear_all` | Clear entire workspace |
+
+#### Production Features
+
+| Feature | Local | S3 | R2 |
+|---------|-------|----|----|
+| Persistent across restarts | ✅ | ✅ | ✅ |
+| Multi-server access | ❌ | ✅ | ✅ |
+| Global CDN distribution | ❌ | ✅ | ✅ |
+| Zero egress fees | N/A | ❌ | ✅ |
+| Auto-retry on failure | ❌ | ✅ | ✅ |
+| Concurrent access safety | ✅ | ✅ | ✅ |
+
+#### Use Cases
+
+| Use Case | Recommended Backend |
+|----------|---------------------|
+| Local development | `local` |
+| Single-server production | `local` or `s3` |
+| Multi-server / Kubernetes | `s3` or `r2` |
+| Edge computing / Workers | `r2` |
+| Cost-sensitive workloads | `r2` (zero egress) |
+
+#### Example: Research Agent with Cloud Storage
+
+```python
+import os
+
+# Set environment for S3
+os.environ["AWS_S3_BUCKET"] = "research-agent-memories"
+os.environ["AWS_ACCESS_KEY_ID"] = "AKIA..."
+os.environ["AWS_SECRET_ACCESS_KEY"] = "..."
+os.environ["AWS_REGION"] = "us-east-1"
+os.environ["AWS_ENDPOINT_URL"] = "https://s3.amazonaws.com" # Optional
+
+agent = OmniCoreAgent(
+    name="research_agent",
+    system_instruction="You are a research assistant. Save your findings to memory.",
+    model_config={"provider": "openai", "model": "gpt-4o"},
+    agent_config={
+        "memory_tool_backend": "s3",  # Files persist in S3
+        "max_steps": 50,
+    }
+)
+
+# Agent can now save research notes that persist across:
+# - Server restarts
+# - Multiple instances
+# - Different geographic locations
+result = await agent.run(
+    "Research the latest AI developments and save a summary to /notes/ai_trends_2024.md"
+)
+```
+
+> 💡 **When to Use**: Use `local` for development. Use `s3` or `r2` when you need:
+> - Files to persist across server restarts
+> - Multiple agent instances accessing the same workspace
+> - Global teams accessing shared agent knowledge
+> - Production-grade durability and reliability
 
 ---
 
