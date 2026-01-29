@@ -20,6 +20,18 @@ from .omni_agent.background_agent import (
     APSchedulerBackend,
     BackgroundTaskScheduler,
 )
+from .omni_agent.omni_serve import OmniServe, OmniServeConfig
+
+# OmniServe resilience and observability utilities
+from .omni_agent.omni_serve.resilience import (
+    RetryConfig,
+    RetryStrategy,
+    CircuitBreaker,
+    CircuitBreakerConfig,
+    with_retry,
+    retry_async,
+)
+from .omni_agent.omni_serve.observability import get_metrics
 
 from .mcp_clients_connection import MCPClient, Configuration
 
@@ -30,6 +42,7 @@ from .omni_agent.workflow.router_agent import RouterAgent
 from .omni_agent.deep_agent import DeepAgent
 
 __all__ = [
+    # Core
     "ReactAgent",
     "MemoryRouter",
     "LLMConnection",
@@ -38,6 +51,7 @@ __all__ = [
     "ToolRegistry",
     "Tool",
     "logger",
+    # Agents
     "OmniCoreAgent",
     "OmniAgent",
     "BackgroundOmniCoreAgent",
@@ -49,6 +63,18 @@ __all__ = [
     "SequentialAgent",
     "RouterAgent",
     "DeepAgent",
+    # MCP
     "MCPClient",
     "Configuration",
+    # OmniServe
+    "OmniServe",
+    "OmniServeConfig",
+    # Resilience utilities
+    "RetryConfig",
+    "RetryStrategy",
+    "CircuitBreaker",
+    "CircuitBreakerConfig",
+    "with_retry",
+    "retry_async",
+    "get_metrics",
 ]

@@ -251,3 +251,107 @@ class DeepAgent:
     def prompt_builder(self) -> DeepAgentPromptBuilder:
         """Get the prompt builder."""
         return self._prompt_builder
+
+    # =========================================================================
+    # OmniCoreAgent Protocol Compatibility Methods (for OmniServe)
+    # =========================================================================
+
+    def generate_session_id(self) -> str:
+        """Generate a new session ID for the session."""
+        return f"deep_agent_{self.name}_{uuid.uuid4().hex[:8]}"
+
+    async def get_metrics(self) -> Dict[str, Any]:
+        """
+        Get the cumulative metrics for the lifecycle of the agent.
+
+        Returns:
+            Dict containing total requests, tokens, and time.
+        """
+        if self._agent:
+            return await self._agent.get_metrics()
+        return {
+            "total_requests": 0,
+            "total_request_tokens": 0,
+            "total_response_tokens": 0,
+            "total_tokens": 0,
+            "total_time": 0,
+            "average_time": 0,
+        }
+
+    async def stream_events(self, session_id: str):
+        """
+        Stream events for a session.
+
+        Args:
+            session_id: The session ID to stream events for
+
+        Yields:
+            Event objects as they are emitted
+        """
+        async for event in self.event_router.stream(session_id=session_id):
+            yield event
+
+    async def get_events(self, session_id: str):
+        """
+        Get all events for a session.
+
+        Args:
+            session_id: The session ID to get events for
+
+        Returns:
+            List of events
+        """
+        return await self.event_router.get_events(session_id=session_id)
+
+    async def get_session_history(self, session_id: str) -> List[Dict[str, Any]]:
+        """
+        Get session message history for a specific session ID.
+
+        Args:
+            session_id: The session ID to get history for
+
+        Returns:
+            List of message dictionaries
+        """
+        return await self.memory_router.get_messages(
+            session_id=session_id, agent_name=self.name
+        )
+
+    async def clear_session_history(self, session_id: Optional[str] = None):
+        """
+        Clear session history for a specific session ID or all history.
+
+        Args:
+            session_id: Optional session ID. If None, clears all history.
+        """
+        if session_id:
+            await self.memory_router.clear_memory(
+                session_id=session_id, agent_name=self.name
+            )
+        else:
+            await self.memory_router.clear_memory(agent_name=self.name)
+
+    async def get_event_store_type(self) -> str:
+        """Get the current event store type."""
+        return self.event_router.get_event_store_type()
+
+    async def is_event_store_available(self) -> bool:
+        """Check if the event store is available."""
+        return self.event_router.is_available()
+
+    async def get_event_store_info(self) -> Dict[str, Any]:
+        """Get information about the current event store."""
+        return self.event_router.get_event_store_info()
+
+    async def switch_event_store(self, event_store_type: str):
+        """Switch to a different event store type."""
+        self.event_router.switch_event_store(event_store_type)
+
+    async def get_memory_store_type(self) -> str:
+        """Get the current memory store type."""
+        return self.memory_router.memory_store_type
+
+    async def switch_memory_store(self, memory_store_type: str):
+        """Switch to a different memory store type."""
+        self.memory_router.switch_memory_store(memory_store_type)
+

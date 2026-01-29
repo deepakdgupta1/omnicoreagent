@@ -146,7 +146,8 @@ print(result["response"])
 [BM25 Tool Retrieval](#13--advanced-tool-use-bm25-retrieval) •
 [Observability](#14--production-observability--metrics) •
 [Guardrails](#15-️-prompt-injection-guardrails) •
-[Model Support](#16--universal-model-support)
+[Model Support](#16--universal-model-support) •
+[OmniServe](#17--omniserve--production-api-server)
 
 **Reference**: [Examples](#-examples--cookbook) • [Configuration](#️-configuration) • [Testing](#-testing--development) • [Contributing](#-contributing)
 
@@ -1352,6 +1353,182 @@ model_config = {"provider": "azure_openai", "model": "gpt-4o"}
 **Supported**: OpenAI, Anthropic, Google Gemini, Groq, DeepSeek, Mistral, Azure OpenAI, OpenRouter, Ollama
 
 > 💡 **When to Use**: Switch providers based on your needs — use cheaper models (Groq, DeepSeek) for simple tasks, powerful models (GPT-4o, Claude) for complex reasoning, and local models (Ollama) for privacy-sensitive applications.
+
+---
+
+### 17. 🚀 OmniServe — Production API Server
+
+**Turn any agent into a production-ready REST/SSE API with a single command.**
+
+OmniServe transforms OmniCoreAgent or DeepAgent into a full FastAPI server with:
+- ✅ REST and SSE streaming endpoints
+- ✅ Rate limiting with configurable limits
+- ✅ Prometheus metrics at `/prometheus`
+- ✅ OpenTelemetry tracing support
+- ✅ Environment variable configuration
+- ✅ Docker deployment ready
+- ✅ Retry logic and circuit breaker for resilience
+
+#### Quick Start (Zero Code)
+
+```bash
+# Start an agent server without writing any code
+omniserve quickstart --provider gemini --model gemini-2.0-flash --port 8000
+
+# Or run your existing agent file
+omniserve run --agent my_agent.py --port 8000 --rate-limit 100
+```
+
+#### Python Usage
+
+```python
+from omnicoreagent import OmniCoreAgent, OmniServe, OmniServeConfig
+
+agent = OmniCoreAgent(
+    name="ProductionAgent",
+    system_instruction="You are a helpful assistant.",
+    model_config={"provider": "gemini", "model": "gemini-2.0-flash"},
+)
+
+# Configure the server
+config = OmniServeConfig(
+    port=8000,
+    cors_origins=["https://myapp.com"],
+    auth_enabled=True,
+    auth_token="my-secret-token",
+    rate_limit_enabled=True,
+    rate_limit_requests=100,  # 100 requests per minute
+)
+
+# Start the server (blocking)
+server = OmniServe(agent, config=config)
+server.start()
+```
+
+#### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/run` | SSE streaming response |
+| POST | `/run/sync` | JSON response |
+| GET | `/health` | Health check |
+| GET | `/ready` | Readiness check |
+| GET | `/prometheus` | Prometheus metrics |
+| GET | `/tools` | List available tools |
+| GET | `/metrics` | Agent usage metrics |
+| GET | `/events/{session_id}` | Get session events |
+| GET | `/sessions/{session_id}` | Get session history |
+| DELETE | `/sessions/{session_id}` | Clear session |
+
+#### Environment Variables
+
+All settings can be configured via environment variables with `OMNISERVE_` prefix:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OMNISERVE_HOST` | Host to bind to | `0.0.0.0` |
+| `OMNISERVE_PORT` | Port to bind to | `8000` |
+| `OMNISERVE_WORKERS` | Number of worker processes | `1` |
+| `OMNISERVE_API_PREFIX` | API path prefix (e.g., `/api/v1`) | `""` |
+| `OMNISERVE_ENABLE_DOCS` | Enable Swagger UI at `/docs` | `true` |
+| `OMNISERVE_ENABLE_REDOC` | Enable ReDoc at `/redoc` | `true` |
+| `OMNISERVE_CORS_ENABLED` | Enable CORS middleware | `true` |
+| `OMNISERVE_CORS_ORIGINS` | Comma-separated allowed origins | `*` |
+| `OMNISERVE_CORS_CREDENTIALS` | Allow credentials in CORS | `true` |
+| `OMNISERVE_AUTH_ENABLED` | Enable Bearer token auth | `false` |
+| `OMNISERVE_AUTH_TOKEN` | Bearer token for authentication | — |
+| `OMNISERVE_REQUEST_LOGGING` | Log incoming requests | `true` |
+| `OMNISERVE_LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING, ERROR) | `INFO` |
+| `OMNISERVE_REQUEST_TIMEOUT` | Request timeout in seconds | `300` |
+| `OMNISERVE_RATE_LIMIT_ENABLED` | Enable rate limiting | `false` |
+| `OMNISERVE_RATE_LIMIT_REQUESTS` | Max requests per time window | `100` |
+| `OMNISERVE_RATE_LIMIT_WINDOW` | Rate limit time window in seconds | `60` |
+
+**Example `.env` file:**
+
+```bash
+# Required: Your LLM API key
+LLM_API_KEY=your-api-key-here
+
+# Server settings
+OMNISERVE_PORT=8000
+OMNISERVE_LOG_LEVEL=INFO
+
+# Security
+OMNISERVE_AUTH_ENABLED=true
+OMNISERVE_AUTH_TOKEN=my-secret-token
+OMNISERVE_CORS_ORIGINS=https://myapp.com
+
+# Rate limiting
+OMNISERVE_RATE_LIMIT_ENABLED=true
+OMNISERVE_RATE_LIMIT_REQUESTS=100
+OMNISERVE_RATE_LIMIT_WINDOW=60
+```
+
+
+#### Docker Deployment
+
+Deploy with the full observability stack (Prometheus + Grafana):
+
+```bash
+cd docker
+cp .env.example .env
+# Edit .env with your LLM_API_KEY
+docker-compose up
+```
+
+**Services:**
+- **OmniServe**: http://localhost:8000 (API + Swagger UI)
+- **Prometheus**: http://localhost:9090 (Metrics)
+- **Grafana**: http://localhost:3000 (Dashboards, login: admin/admin)
+
+#### Extensibility
+
+Import components to build custom resilience patterns:
+
+```python
+from omnicoreagent.omni_agent.omni_serve import (
+    RetryConfig,
+    CircuitBreaker,
+    with_retry,
+    get_metrics,
+)
+
+# Add retry to any async function
+@with_retry(RetryConfig(max_retries=5, strategy="exponential"))
+async def call_external_api():
+    ...
+
+# Circuit breaker for failure protection
+breaker = CircuitBreaker("my-api", failure_threshold=3, timeout=60)
+async with breaker:
+    result = await risky_call()
+
+# Access Prometheus metrics programmatically
+metrics = get_metrics()
+print(metrics.to_prometheus())
+```
+
+#### CLI Commands
+
+```bash
+# Show help
+omniserve --help
+
+# Quickstart (zero code)
+omniserve quickstart --provider openai --model gpt-4o
+
+# Run with an agent file
+omniserve run --agent my_agent.py --port 8000 --auth-token secret
+
+# Generate .env template
+omniserve config --env-example > .env
+
+# View current config from environment
+omniserve config --show
+```
+
+> 💡 **When to Use**: Use OmniServe when you need to deploy agents as APIs — perfect for microservices, webhooks, chatbots, and any application that needs to consume agent capabilities over HTTP.
 
 ---
 

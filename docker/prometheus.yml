@@ -1,0 +1,21 @@
+# Prometheus Configuration for OmniServe
+#
+# Scrapes metrics from OmniServe's /prometheus endpoint
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # OmniServe metrics
+  - job_name: "omniserver"
+    static_configs:
+      - targets: ["omniserver:8000"]
+    metrics_path: "/prometheus"
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # Prometheus self-monitoring
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

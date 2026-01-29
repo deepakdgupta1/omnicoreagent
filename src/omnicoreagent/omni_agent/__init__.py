@@ -12,6 +12,7 @@ from .background_agent import (
     APSchedulerBackend,
     BackgroundTaskScheduler,
 )
+from .omni_serve import OmniServe, OmniServeConfig
 
 __all__ = [
     "OmniCoreAgent",
@@ -20,4 +21,7 @@ __all__ = [
     "TaskRegistry",
     "APSchedulerBackend",
     "BackgroundTaskScheduler",
+    "OmniServe",
+    "OmniServeConfig",
 ]
+

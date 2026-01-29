@@ -22,4 +22,6 @@ memories/
 .omnicoreagent_artifacts/*
 .agents/skills/*
 omnistudio/web/node_modules/*
+omnicoreagent-video/*
+.gemini/*
 

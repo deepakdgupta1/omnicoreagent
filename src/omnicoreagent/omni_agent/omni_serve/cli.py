@@ -1,0 +1,289 @@
+"""
+OmniServe CLI - Command-line interface for quick server deployment.
+
+Usage:
+    omniserve run --agent path/to/agent.py --port 8000
+    omniserve quickstart --provider gemini --model gemini-2.0-flash
+    omniserve config --show
+"""
+
+import os
+import sys
+import importlib.util
+from pathlib import Path
+from typing import Optional
+
+import click
+
+from omnicoreagent.core.utils import logger
+
+
+def _load_agent_from_file(path: str):
+    """
+    Load an agent from a Python file.
+
+    The file should define an `agent` variable or an `create_agent()` function.
+    """
+    file_path = Path(path).resolve()
+    if not file_path.exists():
+        raise click.ClickException(f"Agent file not found: {path}")
+
+    # Load the module
+    spec = importlib.util.spec_from_file_location("agent_module", file_path)
+    if spec is None or spec.loader is None:
+        raise click.ClickException(f"Failed to load module from: {path}")
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["agent_module"] = module
+
+    # Add the file's directory to path for relative imports
+    sys.path.insert(0, str(file_path.parent))
+
+    try:
+        spec.loader.exec_module(module)
+    except Exception as e:
+        raise click.ClickException(f"Error loading agent file: {e}")
+
+    # Look for agent variable or create_agent function
+    if hasattr(module, "agent"):
+        return module.agent
+    elif hasattr(module, "create_agent"):
+        return module.create_agent()
+    else:
+        raise click.ClickException(
+            f"Agent file must define an 'agent' variable or 'create_agent()' function"
+        )
+
+
+@click.group()
+@click.version_option(version="0.0.1", prog_name="omniserve")
+def cli():
+    """OmniServe - Production-ready API server for AI agents.
+
+    Deploy OmniCoreAgent or DeepAgent as a REST/SSE API with a single command.
+    """
+    pass
+
+
+@cli.command()
+@click.option(
+    "--agent", "-a",
+    type=click.Path(exists=True),
+    help="Path to Python file containing the agent",
+)
+@click.option("--host", "-h", default=None, help="Host to bind to (default: 0.0.0.0)")
+@click.option("--port", "-p", default=None, type=int, help="Port to bind to (default: 8000)")
+@click.option("--workers", "-w", default=1, type=int, help="Number of workers")
+@click.option("--reload", is_flag=True, help="Enable auto-reload for development")
+@click.option("--no-docs", is_flag=True, help="Disable Swagger UI")
+@click.option("--cors-origins", default="*", help="Comma-separated CORS origins")
+@click.option("--auth-token", default=None, help="Enable auth with this token")
+@click.option("--rate-limit", default=None, type=int, help="Rate limit (requests per minute)")
+def run(
+    agent: Optional[str],
+    host: Optional[str],
+    port: Optional[int],
+    workers: int,
+    reload: bool,
+    no_docs: bool,
+    cors_origins: str,
+    auth_token: Optional[str],
+    rate_limit: Optional[int],
+):
+    """Run an agent as an API server.
+
+    Example:
+        omniserve run --agent my_agent.py --port 8000
+    """
+    from omnicoreagent import OmniServe, OmniServeConfig
+
+    if agent is None:
+        raise click.ClickException(
+            "Please specify an agent file with --agent or use 'omniserve quickstart'"
+        )
+
+    # Load the agent
+    click.echo(f"📦 Loading agent from: {agent}")
+    loaded_agent = _load_agent_from_file(agent)
+    click.echo(f"✅ Loaded agent: {loaded_agent.name}")
+
+    # Build config
+    config = OmniServeConfig(
+        host=host or "0.0.0.0",
+        port=port or 8000,
+        workers=workers,
+        enable_docs=not no_docs,
+        cors_origins=[o.strip() for o in cors_origins.split(",")],
+        auth_enabled=auth_token is not None,
+        auth_token=auth_token,
+        rate_limit_enabled=rate_limit is not None,
+        rate_limit_requests=rate_limit or 100,
+        rate_limit_window=60,
+    )
+
+    # Start server
+    click.echo("")
+    click.echo("=" * 50)
+    click.echo("🚀 OmniServe v0.0.1")
+    click.echo("=" * 50)
+    click.echo(f"Agent: {loaded_agent.name}")
+    click.echo(f"Server: http://{config.host}:{config.port}")
+    if config.enable_docs:
+        click.echo(f"Docs: http://{config.host}:{config.port}/docs")
+    click.echo(f"Metrics: http://{config.host}:{config.port}/prometheus")
+    click.echo("")
+    click.echo("Features Enabled:")
+    click.echo(f"  • Auth: {'✓ (Bearer token)' if config.auth_enabled else '✗ (use --auth-token to enable)'}")
+    click.echo(f"  • Rate Limit: {'✓ ' + str(config.rate_limit_requests) + '/min' if config.rate_limit_enabled else '✗ (use --rate-limit N to enable)'}")
+    click.echo(f"  • CORS: {config.cors_origins}")
+    click.echo("")
+    click.echo("💡 Available options: --auth-token, --rate-limit, --cors-origins, --no-docs, --reload")
+    click.echo("   Run 'omniserve run --help' for all options")
+    click.echo("=" * 50)
+    click.echo("")
+
+    server = OmniServe(loaded_agent, config=config)
+    server.start(reload=reload)
+
+
+@cli.command()
+@click.option("--provider", "-p", default="gemini", help="LLM provider (openai, gemini, anthropic)")
+@click.option("--model", "-m", default="gemini-2.0-flash", help="Model name")
+@click.option("--name", "-n", default="QuickAgent", help="Agent name")
+@click.option("--instruction", "-i", default="You are a helpful AI assistant.", help="System instruction")
+@click.option("--port", default=8000, type=int, help="Port to bind to")
+@click.option("--host", default="0.0.0.0", help="Host to bind to")
+def quickstart(
+    provider: str,
+    model: str,
+    name: str,
+    instruction: str,
+    port: int,
+    host: str,
+):
+    """Start a quick agent server without writing any code.
+
+    Example:
+        omniserve quickstart --provider openai --model gpt-4o --port 8000
+    """
+    from omnicoreagent import OmniCoreAgent, OmniServe, OmniServeConfig
+
+    click.echo(f"🚀 Creating {provider}/{model} agent...")
+
+    # Create agent
+    agent = OmniCoreAgent(
+        name=name,
+        system_instruction=instruction,
+        model_config={
+            "provider": provider,
+            "model": model,
+        },
+        debug=False,
+    )
+
+    config = OmniServeConfig(
+        host=host,
+        port=port,
+        enable_docs=True,
+        cors_origins=["*"],
+    )
+
+    click.echo("")
+    click.echo("=" * 50)
+    click.echo("🚀 OmniServe v0.0.1 - Quickstart")
+    click.echo("=" * 50)
+    click.echo(f"Agent: {name}")
+    click.echo(f"Model: {provider}/{model}")
+    click.echo(f"Server: http://{host}:{port}")
+    click.echo(f"Docs: http://{host}:{port}/docs")
+    click.echo(f"Metrics: http://{host}:{port}/prometheus")
+    click.echo("")
+    click.echo("Features (default):")
+    click.echo("  • Auth: ✗ (use 'omniserve run' with --auth-token to enable)")
+    click.echo("  • Rate Limit: ✗ (use 'omniserve run' with --rate-limit to enable)")
+    click.echo("  • CORS: * (all origins)")
+    click.echo("")
+    click.echo("💡 For more control, use 'omniserve run --agent my_agent.py'")
+    click.echo("   Options: --auth-token, --rate-limit, --cors-origins, --reload")
+    click.echo("=" * 50)
+    click.echo("")
+    click.echo("Test with:")
+    click.echo(f'  curl -X POST http://{host}:{port}/run/sync \\')
+    click.echo('    -H "Content-Type: application/json" \\')
+    click.echo('    -d \'{"query": "Hello!"}\'')
+    click.echo("")
+
+    server = OmniServe(agent, config=config)
+    server.start()
+
+
+@cli.command("config")
+@click.option("--show", is_flag=True, help="Show current configuration from environment")
+@click.option("--env-example", is_flag=True, help="Print example .env file")
+def config_cmd(show: bool, env_example: bool):
+    """View or generate configuration.
+
+    Example:
+        omniserve config --show
+        omniserve config --env-example > .env
+    """
+    from omnicoreagent.omni_agent.omni_serve import OmniServeConfig
+
+    if env_example:
+        click.echo("""# OmniServe Configuration
+# Copy this to .env and modify as needed
+
+# Server
+OMNISERVE_HOST=0.0.0.0
+OMNISERVE_PORT=8000
+OMNISERVE_WORKERS=1
+
+# API
+OMNISERVE_API_PREFIX=
+OMNISERVE_ENABLE_DOCS=true
+OMNISERVE_ENABLE_REDOC=true
+
+# CORS
+OMNISERVE_CORS_ENABLED=true
+OMNISERVE_CORS_ORIGINS=*
+OMNISERVE_CORS_CREDENTIALS=true
+
+# Authentication
+OMNISERVE_AUTH_ENABLED=false
+OMNISERVE_AUTH_TOKEN=
+
+# Logging
+OMNISERVE_REQUEST_LOGGING=true
+OMNISERVE_LOG_LEVEL=INFO
+
+# Rate Limiting
+OMNISERVE_RATE_LIMIT_ENABLED=false
+OMNISERVE_RATE_LIMIT_REQUESTS=100
+OMNISERVE_RATE_LIMIT_WINDOW=60
+
+# Timeout
+OMNISERVE_REQUEST_TIMEOUT=300
+""")
+        return
+
+    if show:
+        config = OmniServeConfig.from_env()
+        click.echo("Current OmniServe Configuration:")
+        click.echo("-" * 40)
+        for key, value in config.model_dump().items():
+            # Mask auth token
+            if key == "auth_token" and value:
+                value = value[:4] + "****" + value[-4:] if len(value) > 8 else "****"
+            click.echo(f"  {key}: {value}")
+        return
+
+    click.echo("Use --show to view current config or --env-example for template")
+
+
+def main():
+    """Entry point for the CLI."""
+    cli()
+
+
+if __name__ == "__main__":
+    main()

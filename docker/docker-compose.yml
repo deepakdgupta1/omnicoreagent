@@ -1,0 +1,166 @@
+# OmniServe Docker Compose with Full Observability Stack
+#
+# Quick start:
+#   1. Copy .env.example to .env and set your API keys
+#   2. docker-compose up
+#
+# Services:
+#   - OmniServe: http://localhost:8000 (API + /prometheus)
+#   - Prometheus: http://localhost:9090
+#   - Grafana: http://localhost:3000 (admin/admin)
+
+services:
+  # =========================================================================
+  # OmniServe - The AI Agent API Server
+  # =========================================================================
+  omniserver:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: omniserver
+    ports:
+      - "${OMNISERVE_PORT:-8000}:8000"
+    environment:
+      # =======================================================================
+      # LLM API Key (Required)
+      # =======================================================================
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      
+      # =======================================================================
+      # Server Configuration
+      # =======================================================================
+      - OMNISERVE_HOST=${OMNISERVE_HOST:-0.0.0.0}
+      - OMNISERVE_PORT=${OMNISERVE_PORT:-8000}
+      - OMNISERVE_WORKERS=${OMNISERVE_WORKERS:-1}
+      - OMNISERVE_API_PREFIX=${OMNISERVE_API_PREFIX:-}
+      
+      # =======================================================================
+      # Documentation
+      # =======================================================================
+      - OMNISERVE_ENABLE_DOCS=${OMNISERVE_ENABLE_DOCS:-true}
+      - OMNISERVE_ENABLE_REDOC=${OMNISERVE_ENABLE_REDOC:-true}
+      
+      # =======================================================================
+      # CORS Configuration
+      # =======================================================================
+      - OMNISERVE_CORS_ENABLED=${OMNISERVE_CORS_ENABLED:-true}
+      - OMNISERVE_CORS_ORIGINS=${OMNISERVE_CORS_ORIGINS:-*}
+      - OMNISERVE_CORS_CREDENTIALS=${OMNISERVE_CORS_CREDENTIALS:-true}
+      
+      # =======================================================================
+      # Authentication
+      # =======================================================================
+      - OMNISERVE_AUTH_ENABLED=${OMNISERVE_AUTH_ENABLED:-false}
+      - OMNISERVE_AUTH_TOKEN=${OMNISERVE_AUTH_TOKEN:-}
+      
+      # =======================================================================
+      # Logging
+      # =======================================================================
+      - OMNISERVE_REQUEST_LOGGING=${OMNISERVE_REQUEST_LOGGING:-true}
+      - OMNISERVE_LOG_LEVEL=${OMNISERVE_LOG_LEVEL:-INFO}
+      
+      # =======================================================================
+      # Rate Limiting
+      # =======================================================================
+      - OMNISERVE_RATE_LIMIT_ENABLED=${OMNISERVE_RATE_LIMIT_ENABLED:-false}
+      - OMNISERVE_RATE_LIMIT_REQUESTS=${OMNISERVE_RATE_LIMIT_REQUESTS:-100}
+      - OMNISERVE_RATE_LIMIT_WINDOW=${OMNISERVE_RATE_LIMIT_WINDOW:-60}
+      
+      # =======================================================================
+      # Timeouts
+      # =======================================================================
+      - OMNISERVE_REQUEST_TIMEOUT=${OMNISERVE_REQUEST_TIMEOUT:-300}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - omniserver-net
+    
+    # Optional: Mount custom agent file
+    # volumes:
+    #   - ./my_agent.py:/app/agent.py:ro
+    # command: ["omniserve", "run", "--agent", "/app/agent.py"]
+
+
+  # =========================================================================
+  # Prometheus - Metrics Collection
+  # Scrapes /prometheus endpoint from OmniServe
+  # =========================================================================
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: omniserver-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - omniserver-net
+    depends_on:
+      - omniserver
+
+  # =========================================================================
+  # Grafana - Metrics Visualization
+  # Pre-configured to use Prometheus as data source
+  # =========================================================================
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: omniserver-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - omniserver-net
+    depends_on:
+      - prometheus
+
+  # =========================================================================
+  # Redis (Optional) - For distributed rate limiting
+  # =========================================================================
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: omniserver-redis
+  #   ports:
+  #     - "6379:6379"
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 3
+  #   networks:
+  #     - omniserver-net
+
+networks:
+  omniserver-net:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
