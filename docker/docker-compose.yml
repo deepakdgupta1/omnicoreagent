@@ -69,6 +69,25 @@ services:
       # =======================================================================
       # Timeouts
       # =======================================================================
+      # =======================================================================
+      # Cloud Storage (Optional - Uncomment to use)
+      # =======================================================================
+      # AWS S3
+      # - AWS_S3_BUCKET=${AWS_S3_BUCKET:-}
+      # - AWS_REGION=${AWS_REGION:-us-east-1}
+      # - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      # - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      # - AWS_ENDPOINT_URL=${AWS_ENDPOINT_URL:-}
+      
+      # Cloudflare R2
+      # - R2_BUCKET_NAME=${R2_BUCKET_NAME:-}
+      # - R2_ACCOUNT_ID=${R2_ACCOUNT_ID:-}
+      # - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID:-}
+      # - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY:-}
+
+      # =======================================================================
+      # Timeouts
+      # =======================================================================
       - OMNISERVE_REQUEST_TIMEOUT=${OMNISERVE_REQUEST_TIMEOUT:-300}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

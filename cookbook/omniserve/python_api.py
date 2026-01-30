@@ -130,6 +130,9 @@ Use tools when appropriate.""",
     },
     local_tools=tools,
     debug=False,
+    agent_config={
+        "memory_tool_backend": "s3"
+    }
 )
 
 

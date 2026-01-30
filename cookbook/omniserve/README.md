@@ -74,3 +74,27 @@ config = OmniServeConfig(port=8000)
 | GET | `/prometheus` | Prometheus metrics |
 | GET | `/tools` | List available tools |
 | GET | `/metrics` | Agent usage metrics |
+
+---
+
+## Docker Deployment
+
+OmniServe includes a production deployment generator that "containerizes" your agent or app.
+
+### Generate Configuration
+Run the interactive wizard:
+```bash
+omniserve generate-deployment --file cookbook/omniserve/python_api.py
+```
+This inspects your code and generates:
+1.  `docker-compose.yml`: Production service definition with persistent volumes.
+2.  `.env`: Template for secrets (with placeholders like `LLM_API_KEY`).
+3.  `Dockerfile`: Minimal image installing `omnicoreagent` from PyPI.
+
+### Features
+*   **Universal Support**: Works with simple Agent scripts (`omniserve run ...`) AND full OmniServe Apps (`python app.py`).
+*   **Smart Inspection**: Scans your code to detect if you use Memory tools (S3/R2) and configures them only if needed.
+*   **Persistent Storage**: Automatically creates and mounts volumes for your agent's "brain" (with correct permissions):
+    *   `.omnicoreagent_config/` (Tool configurations)
+    *   `.omnicoreagent_artifacts/` (Generated outputs)
+    *   `.agents/skills/` (Learned skills - if present)

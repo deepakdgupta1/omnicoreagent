@@ -1526,6 +1526,22 @@ omniserve config --env-example > .env
 
 # View current config from environment
 omniserve config --show
+
+# 🐳 Generate Docker Deployment
+omniserve generate-deployment --file my_agent.py
+```
+
+#### Production Deployment Generator
+
+Ship your agents to production in seconds with our built-in Docker generator. This tool inspects your agent code and auto-generates a production-ready `docker-compose.yml` and `Dockerfile`.
+
+**Features:**
+*   **Smart Inspection**: Auto-configures S3/R2 memory if detected in your code.
+*   **Persistent Storage**: Mounts `.omnicoreagent_config` and `.omnicoreagent_artifacts` volumes with correct permissions.
+*   **Universal**: Works with simple agent scripts (`omniserve run`) AND full OmniServe apps (`python app.py`).
+
+```bash
+omniserve generate-deployment --file <file_path>
 ```
 
 > 💡 **When to Use**: Use OmniServe when you need to deploy agents as APIs — perfect for microservices, webhooks, chatbots, and any application that needs to consume agent capabilities over HTTP.
@@ -1553,6 +1569,8 @@ All examples are in the **[Cookbook](./cookbook)** — organized by use case wit
 | **[OmniAudit](./cookbook/showcase/omniavelis)** | Healthcare Claims Audit System | Multi-agent pipeline, ERISA compliance |
 | **[DevOps Copilot](./cookbook/showcase/devops_copilot_agent)** | AI-Powered DevOps Automation | Docker, Prometheus, Grafana |
 | **[Deep Code Agent](./cookbook/showcase/deep_code_agent)** | Code Analysis with Sandbox | Sandbox execution, session management |
+
+
 
 ### Featured Examples
 
