@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  omniserver:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: omniserver
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - ./.omnicoreagent_config:/app/.omnicoreagent_config
+      - ./.omnicoreagent_artifacts:/app/.omnicoreagent_artifacts
+      - ./memories:/app/memories
+    command: ["omniserve", "run", "--agent", "/app/engine/deep_agent_runner.py"]
+    restart: unless-stopped

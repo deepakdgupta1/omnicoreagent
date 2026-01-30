@@ -414,17 +414,27 @@ def generate_deployment(file_path: str, output_dir: str):
         f.write(env_content)
         
     # docker-compose.yml
-    filename = os.path.basename(file_path)
+    # We maintain the folder structure to ensure imports work correctly.
+    # So we mount context (.) to /app
+    
+    # Calculate relative path from current working directory (where docker-compose is)
+    # to the target file.
+    try:
+        rel_path = os.path.relpath(Path(file_path).resolve(), Path.cwd())
+    except ValueError:
+        # Fallback if on different drives (Windows) or other issues
+        rel_path = os.path.basename(file_path)
 
     # Determine command based on mode
+    # Since we mount . to /app, the file is at /app/{rel_path}
     if is_full_app:
         # Run python directly
-        cmd = ["python", f"/app/{filename}"]
-        agent_msg = f"python /app/{filename}"
+        cmd = ["python", f"/app/{rel_path}"]
+        agent_msg = f"python /app/{rel_path}"
     else:
         # Run via omniserve CLI wrapper
-        cmd = ["omniserve", "run", "--agent", f"/app/{filename}"]
-        agent_msg = f"omniserve run --agent /app/{filename}"
+        cmd = ["omniserve", "run", "--agent", f"/app/{rel_path}"]
+        agent_msg = f"omniserve run --agent /app/{rel_path}"
     
     # Create necessary directories for persistence (so they are owned by user, not root)
     # We create them in the current directory (where docker-compose is run)
@@ -433,12 +443,10 @@ def generate_deployment(file_path: str, output_dir: str):
     # But usually docker-compose is run at the root. 
     # Let's assume the user runs generate-deployment at the root.
     
-    config_dir = Path(".omnicoreagent_config")
     artifacts_dir = Path(".omnicoreagent_artifacts")
     skills_dir = Path(".agents/skills")
     
     # Ensure output dirs exist so we can mount them
-    config_dir.mkdir(exist_ok=True)
     artifacts_dir.mkdir(exist_ok=True)
     
     compose_content = f"""version: '3.8'
@@ -454,8 +462,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./{file_path}:/app/{filename}:ro
-      - ./.omnicoreagent_config:/app/.omnicoreagent_config
+      - .:/app
       - ./.omnicoreagent_artifacts:/app/.omnicoreagent_artifacts"""
 
     # Only mount skills if they exist

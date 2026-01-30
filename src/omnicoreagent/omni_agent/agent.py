@@ -75,10 +75,8 @@ class OmniCoreAgent:
         self.debug = debug
         self._cumulative_usage = Usage()
 
-        self.memory_router = memory_router or MemoryRouter(
-            memory_store_type="in_memory"
-        )
-        self.event_router = event_router or EventRouter(event_store_type="in_memory")
+        self.memory_router = memory_router
+        self.event_router = event_router
         self.config_transformer = config_transformer
         self.prompt_builder = prompt_builder or OmniCoreAgentPromptBuilder(
             SYSTEM_SUFFIX
@@ -86,10 +84,24 @@ class OmniCoreAgent:
         self.agent = None
         self.mcp_client = None
         self.llm_connection = None
+        self.internal_config = None
+        self.guardrail = None
+
+        self._initialized = False
+
+    async def initialize(self):
+        """Initialize the agent resources (memory, config, tools)"""
+        if self._initialized:
+            return
+
+        if not self.memory_router:
+            self.memory_router = MemoryRouter(memory_store_type="in_memory")
+        
+        if not self.event_router:
+            self.event_router = EventRouter(event_store_type="in_memory")
 
         self.internal_config = self._create_internal_config()
 
-        self.guardrail = None
         agent_cfg = self.internal_config.get("AgentConfig", {})
         if agent_cfg.get("guardrail_config"):
             logger.info(f"Guardrail enabled for agent: {self.name}")
@@ -97,6 +109,7 @@ class OmniCoreAgent:
             self.guardrail = PromptInjectionGuard(g_config)
 
         self._create_agent()
+        self._initialized = True
 
     def _create_internal_config(self) -> Dict[str, Any]:
         """Transform user configuration to internal format"""
@@ -107,8 +120,6 @@ class OmniCoreAgent:
             mcp_tools=self.mcp_tools,
             agent_config=agent_config_with_name,
         )
-
-        self._save_config_hidden(internal_config)
 
         return internal_config
 
@@ -154,18 +165,7 @@ class OmniCoreAgent:
                 },
             }
 
-    def _save_config_hidden(self, config: Dict[str, Any]):
-        """Save config to hidden location with agent-specific filename"""
-        hidden_dir = Path(".omnicoreagent_config")
-        hidden_dir.mkdir(exist_ok=True)
 
-        safe_agent_name = (
-            self.name.replace(" ", "_").replace("/", "_").replace("\\", "_")
-        )
-        hidden_config_path = hidden_dir / f"servers_config_{safe_agent_name}.json"
-        self.config_transformer.save_config(config, str(hidden_config_path))
-
-        self._config_file_path = hidden_config_path
 
     def _create_agent(self):
         """Create the appropriate agent based on configuration"""
@@ -175,13 +175,15 @@ class OmniCoreAgent:
             self.mcp_client = MCPClient(
                 config=shared_config,
                 debug=self.debug,
-                config_filename=str(self._config_file_path),
+                config_filename=str(self._config_file_path) if hasattr(self, "_config_file_path") else "servers_config.json",
+                loaded_config=self.internal_config,
             )
             self.llm_connection = self.mcp_client.llm_connection
         else:
             self.mcp_client = None
             self.llm_connection = LLMConnection(
-                shared_config, config_filename=str(self._config_file_path)
+                shared_config, config_filename=str(self._config_file_path) if hasattr(self, "_config_file_path") else "servers_config.json",
+                loaded_config=self.internal_config
             )
 
         agent_config_dict = self.internal_config["AgentConfig"]
@@ -276,6 +278,9 @@ class OmniCoreAgent:
 
     async def connect_mcp_servers(self):
         """Connect to MCP servers if MCP tools are configured"""
+        if not self._initialized:
+            await self.initialize()
+
         if self.mcp_client and self.mcp_tools:
             await self.mcp_client.connect_to_servers(self.mcp_client.config_filename)
             if self.agent.enable_advanced_tool_use:
@@ -298,6 +303,9 @@ class OmniCoreAgent:
         Returns:
             Dict containing response and session_id
         """
+        if not self._initialized:
+            await self.initialize()
+
         if self.guardrail:
             result = self.guardrail.check(query)
             if not result.is_safe:
@@ -369,6 +377,9 @@ class OmniCoreAgent:
 
     async def list_all_available_tools(self):
         """List all available tools (MCP and local)"""
+        if not self._initialized:
+            await self.initialize()
+            
         available_tools = []
 
         if self.mcp_client:

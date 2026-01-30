@@ -202,9 +202,11 @@ class MCPClient:
         config: dict[str, Any],
         debug: bool = False,
         config_filename: str = "servers_config.json",
+        loaded_config: dict[str, Any] = None,
     ):
         self.config = config
         self.config_filename = config_filename
+        self._loaded_config = loaded_config
         self.sessions = {}
         self._cleanup_lock = asyncio.Lock()
         self.available_tools = {}
@@ -217,7 +219,9 @@ class MCPClient:
         self.llm_connection = None
         if self.config and hasattr(self.config, "llm_api_key"):
             try:
-                self.llm_connection = LLMConnection(self.config, self.config_filename)
+                self.llm_connection = LLMConnection(
+                    self.config, self.config_filename, loaded_config=self._loaded_config
+                )
                 if self.llm_connection and self.llm_connection.llm_config:
                     logger.debug("LLM connection initialized successfully")
                 else:
@@ -234,7 +238,10 @@ class MCPClient:
 
     async def connect_to_servers(self, config_filename: str = "servers_config.json"):
         """Connect to an MCP server"""
-        server_config = self.config.load_config(config_filename)
+        if self._loaded_config:
+            server_config = self._loaded_config
+        else:
+            server_config = self.config.load_config(config_filename)
         servers = [
             {"name": name, "srv_config": srv_config}
             for name, srv_config in server_config["mcpServers"].items()

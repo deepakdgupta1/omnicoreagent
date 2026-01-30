@@ -108,9 +108,15 @@ def retry_with_backoff(max_retries=3, base_delay=1, max_delay=60, backoff_factor
 class LLMConnection:
     """Manages LLM connections using LiteLLM."""
 
-    def __init__(self, config: dict[str, Any] | Any, config_filename: str):
+    def __init__(
+        self,
+        config: dict[str, Any] | Any,
+        config_filename: str,
+        loaded_config: dict[str, Any] = None,
+    ):
         self.config = config
         self.config_filename = config_filename
+        self._loaded_config = loaded_config
         self.llm_config = None
 
         if hasattr(self.config, "llm_api_key"):

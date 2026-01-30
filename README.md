@@ -1528,7 +1528,7 @@ omniserve config --env-example > .env
 omniserve config --show
 
 # 🐳 Generate Docker Deployment
-omniserve generate-deployment --file my_agent.py
+omniserve generate-deployment --file <agent_file_path>
 ```
 
 #### Production Deployment Generator
@@ -1540,8 +1540,13 @@ Ship your agents to production in seconds with our built-in Docker generator. Th
 *   **Persistent Storage**: Mounts `.omnicoreagent_config` and `.omnicoreagent_artifacts` volumes with correct permissions.
 *   **Universal**: Works with simple agent scripts (`omniserve run`) AND full OmniServe apps (`python app.py`).
 
+**Requirements:**
+Your file must define either:
+1.  An `agent` variable (e.g., `agent = OmniCoreAgent(...)`, `agent = DeepAgent(...)`)
+2.  A `create_agent()` function that returns an agent (for complex setups).
+
 ```bash
-omniserve generate-deployment --file <file_path>
+omniserve generate-deployment --file cookbook/omniserve/python_api.py
 ```
 
 > 💡 **When to Use**: Use OmniServe when you need to deploy agents as APIs — perfect for microservices, webhooks, chatbots, and any application that needs to consume agent capabilities over HTTP.

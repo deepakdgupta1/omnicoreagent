@@ -91,9 +91,17 @@ This inspects your code and generates:
 2.  `.env`: Template for secrets (with placeholders like `LLM_API_KEY`).
 3.  `Dockerfile`: Minimal image installing `omnicoreagent` from PyPI.
 
-### Features
-*   **Universal Support**: Works with simple Agent scripts (`omniserve run ...`) AND full OmniServe Apps (`python app.py`).
-*   **Smart Inspection**: Scans your code to detect if you use Memory tools (S3/R2) and configures them only if needed.
+### Features:
+*   **Universal Support**: Works with simple agents AND full OmniServe apps.
+*   **Smart Inspection**: Auto-detects memory tool usage (S3/R2).
+*   **Secure**: Uses placeholders for secrets in `.env`.
+*   **Persistent**: Auto-configures volumes for skills, artifacts, and config.
+
+**Requirements:**
+Your agent file must define either:
+1.  An `agent` variable (e.g., `agent = OmniCoreAgent(...)`)
+2.  A `create_agent()` function that returns an agent.
+
 *   **Persistent Storage**: Automatically creates and mounts volumes for your agent's "brain" (with correct permissions):
     *   `.omnicoreagent_config/` (Tool configurations)
     *   `.omnicoreagent_artifacts/` (Generated outputs)
