@@ -112,16 +112,17 @@ async def run_agent_stream(
                         event_type = str(event_type)
 
                     yield format_sse_event(event_type, event_data)
+                    
+                    # Check if this is the FINAL_ANSWER event - stream is complete
+                    if event_type == "final_answer":
+                        return
             except Exception as e:
                 logger.error(f"OmniServe SSE: Event streaming error: {e}")
                 yield format_sse_event("error", {"error": str(e)})
 
-        # Stream events with timeout checks
+        # Stream events - the generator will exit when FINAL_ANSWER is received
         async for sse_event in stream_events():
             yield sse_event
-            # Check if run completed
-            if run_complete.is_set():
-                break
 
     except asyncio.CancelledError:
         agent_task.cancel()
