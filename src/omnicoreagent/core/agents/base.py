@@ -748,9 +748,7 @@ class BaseReactAgent:
                 )
 
                 if event_router:
-                    self.background_task_manager.run_background_strict(
-                        event_router(session_id=session_id, event=event)
-                    )
+                    await event_router(session_id=session_id, event=event)
                 session_state.loop_detector.record_tool_call(
                     str(tool_name),
                     str(tool_args),
@@ -922,9 +920,7 @@ class BaseReactAgent:
                     agent_name=self.agent_name,
                 )
                 if event_router:
-                    self.background_task_manager.run_background_strict(
-                        event_router(session_id=session_id, event=event)
-                    )
+                    await event_router(session_id=session_id, event=event)
 
             except asyncio.TimeoutError:
                 obs_text = (
@@ -968,9 +964,7 @@ class BaseReactAgent:
                     agent_name=self.agent_name,
                 )
                 if event_router:
-                    self.background_task_manager.run_background_strict(
-                        event_router(session_id=session_id, event=event)
-                    )
+                    await event_router(session_id=session_id, event=event)
 
             except Exception as e:
                 obs_text = f"Error executing tool: {str(e)}"
@@ -1011,9 +1005,7 @@ class BaseReactAgent:
                     agent_name=self.agent_name,
                 )
                 if event_router:
-                    self.background_task_manager.run_background_strict(
-                        event_router(session_id=session_id, event=event)
-                    )
+                    await event_router(session_id=session_id, event=event)
 
         if debug:
             show_tool_response(
@@ -1093,9 +1085,7 @@ class BaseReactAgent:
                     agent_name=self.agent_name,
                 )
                 if event_router:
-                    self.background_task_manager.run_background_strict(
-                        event_router(session_id=session_id, event=event)
-                    )
+                    await event_router(session_id=session_id, event=event)
 
                 session_state.messages.append(
                     Message(role="user", content=loop_message)
@@ -1523,9 +1513,7 @@ class BaseReactAgent:
             agent_name=self.agent_name,
         )
         if event_router:
-            self.background_task_manager.run_background_strict(
-                event_router(session_id=session_id, event=event)
-            )
+            await event_router(session_id=session_id, event=event)
         metadata = {"agent_calls": agent_calls}
         await add_message_to_history(
             role="assistant",
@@ -1603,9 +1591,7 @@ class BaseReactAgent:
                         agent_name=self.agent_name,
                     )
                     if event_router:
-                        self.background_task_manager.run_background_strict(
-                            event_router(session_id=session_id, event=event)
-                        )
+                        await event_router(session_id=session_id, event=event)
                 else:
                     if isinstance(obs_data, dict):
                         agent_response = obs_data.get(
@@ -1649,9 +1635,7 @@ class BaseReactAgent:
                         agent_name=self.agent_name,
                     )
                     if event_router:
-                        self.background_task_manager.run_background_strict(
-                            event_router(session_id=session_id, event=event)
-                        )
+                        await event_router(session_id=session_id, event=event)
 
         xml_obs_block = build_sub_agents_observation_xml(observations)
         agent_call_result = {
@@ -1706,9 +1690,7 @@ class BaseReactAgent:
             agent_name=self.agent_name,
         )
         if event_router:
-            self.background_task_manager.run_background_strict(
-                event_router(session_id=session_id, event=event)
-            )
+            await event_router(session_id=session_id, event=event)
 
         await add_message_to_history(
             role="user",
@@ -1812,17 +1794,24 @@ class BaseReactAgent:
                     response = await make_llm_call()
 
                     if response:
+                        # Extract the actual message content from the response
+                        if hasattr(response, "choices") and response.choices:
+                            message_content = response.choices[0].message.content
+                        elif hasattr(response, "content"):
+                            message_content = response.content
+                        else:
+                            message_content = str(response)
+                        
                         event = Event(
                             type=EventType.AGENT_MESSAGE,
                             payload=AgentMessagePayload(
-                                message=str(response),
+                                message=message_content,
                             ),
                             agent_name=self.agent_name,
                         )
                         if event_router:
-                            self.background_task_manager.run_background_strict(
-                                event_router(session_id=session_id, event=event)
-                            )
+                            # Await to ensure event is queued before continuing
+                            await event_router(session_id=session_id, event=event)
 
                         if hasattr(response, "usage"):
                             request_usage = Usage(
@@ -1917,9 +1906,9 @@ class BaseReactAgent:
                         agent_name=self.agent_name,
                     )
                     if event_router:
-                        self.background_task_manager.run_background_strict(
-                            event_router(session_id=session_id, event=event)
-                        )
+                        # CRITICAL: Await the event emission to ensure it's in the queue
+                        # before run() returns. This prevents race conditions with SSE streaming.
+                        await event_router(session_id=session_id, event=event)
                     await add_message_to_history(
                         role="assistant",
                         content=parsed_response.answer,
