@@ -280,244 +280,126 @@ OMNISERVE_REQUEST_TIMEOUT=300
     click.echo("Use --show to view current config or --env-example for template")
 
 
-@cli.command("generate-deployment")
-@click.option("--file", "-f", "file_path", type=click.Path(exists=True), help="Path to your python file (e.g. app.py or agent.py)")
+@cli.command("generate-dockerfile")
+@click.option("--file", "-f", "file_path", type=click.Path(exists=True), help="Path to your agent Python file")
 @click.option("--output-dir", "-o", default=".", help="Output directory for generated files")
-def generate_deployment(file_path: str, output_dir: str):
-    """Generate Docker deployment configuration.
+def generate_dockerfile(file_path: str, output_dir: str):
+    """Generate a Dockerfile for deploying your agent.
     
-    Interactively generates a clean docker-compose.yml and .env file 
-    configured specifically for your application.
+    Works both locally and on cloud platforms (Cloud Run, AWS Fargate, Railway).
+    - Copies all files into the image
+    - Uses environment variables for configuration
+    
+    Example:
+        omniserve generate-dockerfile --file my_agent.py
     """
-    import rich
-    import json
     from rich.console import Console
-    from rich.prompt import Prompt, Confirm
+    from rich.prompt import Confirm
     
     console = Console()
-    console.print("[bold blue]🚀 OmniServe Deployment Generator[/bold blue]")
-    console.print("This wizard will generate a production-ready Docker configuration.\n")
+    console.print("[bold blue]🚀 OmniServe Cloud Deployment Generator[/bold blue]")
+    console.print("Generates a cloud-ready Dockerfile for Cloud Run, AWS Fargate, Railway.\n")
     
-    # 1. App/Agent Configuration
     if not file_path:
-        file_path = Prompt.ask("Path to your python file (e.g., app.py or agent.py)")
-        
-    if not os.path.exists(file_path):
-        console.print(f"[bold red]Error:[/bold red] File '{file_path}' not found.")
+        console.print("[bold red]Error:[/bold red] Please specify agent file with --file")
         return
-
-    # Inspect file content to determine mode (App vs Script)
-    is_full_app = False
-    try:
-        with open(file_path, "r") as f:
-            content = f.read()
-            if "OmniServe(" in content and ".start()" in content:
-                is_full_app = True
-                console.print("[green]✓ Detected self-contained OmniServe app.[/green]")
-            else:
-                console.print("[green]✓ Detected agent definition file.[/green]")
-    except:
-        pass
-
-    # 2. Inspect Agent for Memory Usage (Universal)
-    uses_memory = False
-    memory_backend = "local"
     
-    try:
-        console.print("[dim]Inspecting configuration...[/dim]")
-        loaded_agent = _load_agent_from_file(file_path)
-        
-        # Check explicit config first
-        if loaded_agent.agent_config and isinstance(loaded_agent.agent_config, dict):
-            if loaded_agent.agent_config.get("memory_tool_backend"):
-                uses_memory = True
-                memory_backend = loaded_agent.agent_config.get("memory_tool_backend")
-                
-        # Check tools if not found in config
-        if not uses_memory:
-            # Check local tools
-            if loaded_agent.local_tools:
-                tools_list = loaded_agent.local_tools.get_available_tools()
-                for tool in tools_list:
-                    tool_name = tool.get("name") if isinstance(tool, dict) else tool.name
-                    if tool_name.startswith("memory_"):
-                        uses_memory = True
-                        break
-                        
-        if uses_memory:
-            console.print(f"[green]✓ Memory usage detected (backend: {memory_backend})[/green]")
-        else:
-            console.print("[dim]No memory tools detected. Storage configuration skipped.[/dim]")
-            
-    except Exception as e:
-        console.print(f"[yellow]Warning: Could not inspect agent ({e}). Defaulting to interactive mode.[/yellow]")
-        # If inspection fails (e.g. complex app structure), we ask the user as fallback
-        if Confirm.ask("Could not verify memory usage. Does your app use memory tools (S3/R2)?", default=False):
-            uses_memory = True
-            memory_backend = None
-
-    # 3. Storage Configuration
-    env_vars = {}
-    storage_type = None
-
-    if uses_memory:
-        console.print("\n[bold yellow]Storage Configuration[/bold yellow]")
-        
-        # If we detected a specific backend, use it as default or skip asking if obvious
-        if memory_backend and memory_backend in ["s3", "r2", "local"]:
-             storage_type = memory_backend
-             # console.print(f"Using configured backend: [bold cyan]{storage_type}[/bold cyan]")
-        else:
-            storage_type = Prompt.ask(
-                "Select storage backend", 
-                choices=["local", "s3", "r2"], 
-                default="local"
-            )
-        
-        if storage_type == "s3":
-            console.print("[dim]Added AWS S3 placeholders to .env[/dim]")
-            env_vars["AWS_S3_BUCKET"] = ""
-            env_vars["AWS_REGION"] = "us-east-1"
-            env_vars["AWS_ACCESS_KEY_ID"] = ""
-            env_vars["AWS_SECRET_ACCESS_KEY"] = ""
-            
-        elif storage_type == "r2":
-            console.print("[dim]Added Cloudflare R2 placeholders to .env[/dim]")
-            env_vars["R2_BUCKET_NAME"] = ""
-            env_vars["R2_ACCOUNT_ID"] = ""
-            env_vars["R2_ACCESS_KEY_ID"] = ""
-            env_vars["R2_SECRET_ACCESS_KEY"] = ""
-    else:
-        storage_type = "none"
-
-    # 4. Automatic LLM Configuration (Placeholder)
-    # We automatically add a placeholder for LLM_API_KEY to ensure the user knows to set it.
-    env_vars["LLM_API_KEY"] = "" 
-
-    # Generate Files
-    out_path = Path(output_dir)
-    out_path.mkdir(exist_ok=True)
-    
-    # .env
-    env_content = "# OmniServe Environment Variables\n"
-    if not is_full_app:
-        env_content += f"OMNISERVE_HOST=0.0.0.0\nOMNISERVE_PORT=8000\n"
-
-    for k, v in env_vars.items():
-        if v:
-            env_content += f"{k}={v}\n"
-        else:
-            env_content += f"{k}=  # <--- UPDATE THIS\n"
-        
-    env_file = out_path / ".env"
-    with open(env_file, "w") as f:
-        f.write(env_content)
-        
-    # docker-compose.yml
-    # We maintain the folder structure to ensure imports work correctly.
-    # So we mount context (.) to /app
-    
-    # Calculate relative path from current working directory (where docker-compose is)
-    # to the target file.
+    # Calculate relative path from project root to agent
     try:
         rel_path = os.path.relpath(Path(file_path).resolve(), Path.cwd())
     except ValueError:
-        # Fallback if on different drives (Windows) or other issues
         rel_path = os.path.basename(file_path)
-
-    # Determine command based on mode
-    # Since we mount . to /app, the file is at /app/{rel_path}
-    if is_full_app:
-        # Run python directly
-        cmd = ["python", f"/app/{rel_path}"]
-        agent_msg = f"python /app/{rel_path}"
-    else:
-        # Run via omniserve CLI wrapper
-        cmd = ["omniserve", "run", "--agent", f"/app/{rel_path}"]
-        agent_msg = f"omniserve run --agent /app/{rel_path}"
     
-    # Create necessary directories for persistence (so they are owned by user, not root)
-    # We create them in the current directory (where docker-compose is run)
+    # Inspect agent to detect memory backend
+    memory_backend = None  # None means no memory tools detected
+    try:
+        loaded_agent = _load_agent_from_file(file_path)
+        if loaded_agent.agent_config and isinstance(loaded_agent.agent_config, dict):
+            memory_backend = loaded_agent.agent_config.get("memory_tool_backend")
+        console.print(f"[green]✓ Detected agent: {loaded_agent.name}[/green]")
+        if memory_backend:
+            console.print(f"[dim]Memory backend: {memory_backend}[/dim]")
+        else:
+            console.print("[dim]No memory tools configured[/dim]")
+    except Exception as e:
+        console.print(f"[yellow]Warning: Could not inspect agent ({e})[/yellow]")
     
-    # We assume output_dir is where we want to run docker-compose
-    # But usually docker-compose is run at the root. 
-    # Let's assume the user runs generate-deployment at the root.
+    out_path = Path(output_dir)
+    out_path.mkdir(exist_ok=True)
     
-    artifacts_dir = Path(".omnicoreagent_artifacts")
-    skills_dir = Path(".agents/skills")
+    # Build Dockerfile content
+    # Only non-sensitive defaults go in Dockerfile
+    # Secrets (API keys, S3/R2 creds) are passed at runtime with -e
+    env_lines = [
+        "# Agent path",
+        f"ENV AGENT_PATH=/app/{rel_path}",
+        "",
+        "# Artifacts storage (always ephemeral)",
+        "ENV OMNICOREAGENT_ARTIFACTS_DIR=/tmp/.omnicoreagent_artifacts",
+    ]
     
-    # Ensure output dirs exist so we can mount them
-    artifacts_dir.mkdir(exist_ok=True)
+    # Only local memory needs /tmp path in Dockerfile
+    if memory_backend == "local":
+        env_lines.extend([
+            "",
+            "# Local memory (ephemeral on cloud)",
+            "ENV OMNICOREAGENT_MEMORY_DIR=/tmp/memories",
+        ])
+    # S3/R2 credentials are passed at runtime, not in Dockerfile
     
-    compose_content = f"""version: '3.8'
-
-services:
-  omniserver:
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    container_name: omniserver
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    volumes:
-      - .:/app
-      - ./.omnicoreagent_artifacts:/app/.omnicoreagent_artifacts"""
-
-    # Only mount skills if they exist
-    if skills_dir.exists():
-        compose_content += f"\n      - ./{skills_dir}:/app/.agents/skills"
-
-    if storage_type == "local":
-        compose_content += "\n      - ./memories:/app/memories"
+    env_block = "\n".join(env_lines)
     
-    compose_content += f"""
-    command: {json.dumps(cmd)}
-    restart: unless-stopped
-"""
-
-    compose_file = out_path / "docker-compose.yml"
-    with open(compose_file, "w") as f:
-        f.write(compose_content)
-
-    # Dockerfile (End-User / Production version)
-    dockerfile_content = f"""FROM python:3.12-slim
+    dockerfile_content = f'''FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
 RUN pip install --no-cache-dir omnicoreagent
-# RUN pip install uv && uv init && uv add omnicoreagent
 
-# COPY requirements.txt .
-# RUN pip install -r requirements.txt
+# Copy entire project into image
+COPY . /app
+
+{env_block}
 
 EXPOSE 8000
 
-CMD ["omniserve", "quickstart"]
-"""
+CMD ["sh", "-c", "omniserve run --agent $AGENT_PATH"]
+'''
     
     dockerfile_path = out_path / "Dockerfile"
     with open(dockerfile_path, "w") as f:
         f.write(dockerfile_content)
-
-    console.print(f"\n[bold green]✓ Generated configuration in {output_dir}:[/bold green]")
-    console.print(f"  - {env_file}")
-    console.print(f"  - {compose_file}")
-    console.print(f"  - {dockerfile_path}")
-    console.print("\n[bold]Next Steps:[/bold]")
-    console.print("1. [bold yellow]Update .env with your LLM_API_KEY keys![/bold yellow]")
     
-    if storage_type == "s3":
-        console.print("   [bold yellow]Update .env with your AWS S3 configuration![/bold yellow]")
-    elif storage_type == "r2":
-        console.print("   [bold yellow]Update .env with your Cloudflare R2 configuration![/bold yellow]")
-        
-    console.print("2. [dim]Run command to start server:[/dim]")
-    console.print(f"   docker-compose up -d --build")
+    console.print(f"\n[bold green]✓ Generated {dockerfile_path}[/bold green]")
+    
+    # Build the docker run command based on backend
+    console.print("\n[bold]Next Steps:[/bold]")
+    console.print("1. Build the image:")
+    console.print("   docker build -t omniserver .")
+    
+    console.print("\n2. Run (pass secrets at runtime):")
+    if memory_backend == "s3":
+        console.print("   docker run -p 8000:8000 \\")
+        console.print("     -e LLM_API_KEY=$LLM_API_KEY \\")
+        console.print("     -e AWS_S3_BUCKET=your-bucket \\")
+        console.print("     -e AWS_ACCESS_KEY_ID=... \\")
+        console.print("     -e AWS_SECRET_ACCESS_KEY=... \\")
+        console.print("     -e AWS_REGION=us-east-1 \\")
+        console.print("     omniserver")
+    elif memory_backend == "r2":
+        console.print("   docker run -p 8000:8000 \\")
+        console.print("     -e LLM_API_KEY=$LLM_API_KEY \\")
+        console.print("     -e R2_BUCKET_NAME=your-bucket \\")
+        console.print("     -e R2_ACCOUNT_ID=... \\")
+        console.print("     -e R2_ACCESS_KEY_ID=... \\")
+        console.print("     -e R2_SECRET_ACCESS_KEY=... \\")
+        console.print("     omniserver")
+    else:
+        console.print("   docker run -p 8000:8000 -e LLM_API_KEY=$LLM_API_KEY omniserver")
+    
+    if memory_backend == "local":
+        console.print("\n[yellow]⚠ Local memory is EPHEMERAL - data lost on restart.[/yellow]")
+        console.print("[dim]For persistent memory, configure S3 or R2 in your agent.[/dim]")
 
 
 def main():

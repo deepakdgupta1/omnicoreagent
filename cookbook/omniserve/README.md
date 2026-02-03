@@ -79,30 +79,32 @@ config = OmniServeConfig(port=8000)
 
 ## Docker Deployment
 
-OmniServe includes a production deployment generator that "containerizes" your agent or app.
+Generate a Dockerfile for your agent with a single command:
 
-### Generate Configuration
-Run the interactive wizard:
 ```bash
-omniserve generate-deployment --file cookbook/omniserve/python_api.py
+omniserve generate-dockerfile --file cookbook/omniserve/cli_agent.py
 ```
-This inspects your code and generates:
-1.  `docker-compose.yml`: Production service definition with persistent volumes.
-2.  `.env`: Template for secrets (with placeholders like `LLM_API_KEY`).
-3.  `Dockerfile`: Minimal image installing `omnicoreagent` from PyPI.
 
-### Features:
-*   **Universal Support**: Works with simple agents AND full OmniServe apps.
-*   **Smart Inspection**: Auto-detects memory tool usage (S3/R2).
-*   **Secure**: Uses placeholders for secrets in `.env`.
-*   **Persistent**: Auto-configures volumes for skills, artifacts, and config.
+This generates a production-ready `Dockerfile` that:
+- Copies all files into the image
+- Sets environment variables for ephemeral storage (cloud-ready)
+- Uses `omniserve run` with your agent
+
+### Build and Run
+
+```bash
+docker build -t omniserver .
+docker run -p 8000:8000 -e LLM_API_KEY=$LLM_API_KEY omniserver
+```
+
+### Cloud Deployment
+
+For Cloud Run, AWS Fargate, or Railway, the generated Dockerfile sets:
+- `OMNICOREAGENT_ARTIFACTS_DIR=/tmp/.omnicoreagent_artifacts`
+- `OMNICOREAGENT_MEMORY_DIR=/tmp/memories`
 
 **Requirements:**
 Your agent file must define either:
-1.  An `agent` variable (e.g., `agent = OmniCoreAgent(...)`)
-2.  A `create_agent()` function that returns an agent.
+1. An `agent` variable (e.g., `agent = OmniCoreAgent(...)`)
+2. A `create_agent()` function that returns an agent
 
-*   **Persistent Storage**: Automatically creates and mounts volumes for your agent's "brain" (with correct permissions):
-    *   `.omnicoreagent_config/` (Tool configurations)
-    *   `.omnicoreagent_artifacts/` (Generated outputs)
-    *   `.agents/skills/` (Learned skills - if present)

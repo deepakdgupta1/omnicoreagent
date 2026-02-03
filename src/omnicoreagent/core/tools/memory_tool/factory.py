@@ -4,6 +4,7 @@ Creates backends from string type ("local", "s3", "r2") using environment variab
 Caches backends to avoid re-initializing connections.
 """
 
+import os
 from omnicoreagent.core.tools.memory_tool.base import AbstractMemoryBackend
 from omnicoreagent.core.tools.memory_tool.local_storage import LocalMemoryBackend
 from omnicoreagent.core.tools.memory_tool.s3_storage import S3MemoryBackend
@@ -12,8 +13,8 @@ from decouple import config
 from omnicoreagent.core.utils import logger
 from threading import Lock
 
-# Fixed base directory for local storage - not configurable to avoid issues
-LOCAL_MEMORY_BASE_DIR = "./memories"
+# Configurable via env var for cloud deployments (default: ./memories)
+LOCAL_MEMORY_BASE_DIR = os.environ.get("OMNICOREAGENT_MEMORY_DIR", "./memories")
 
 # Cache for backend instances to avoid re-initialization
 _backend_cache: dict = {}

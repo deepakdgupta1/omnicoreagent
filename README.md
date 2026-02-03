@@ -1360,198 +1360,162 @@ model_config = {"provider": "azure_openai", "model": "gpt-4o"}
 
 **Turn any agent into a production-ready REST/SSE API with a single command.**
 
-OmniServe transforms OmniCoreAgent or DeepAgent into a full FastAPI server with:
-- ✅ REST and SSE streaming endpoints
-- ✅ Rate limiting with configurable limits
-- ✅ Prometheus metrics at `/prometheus`
-- ✅ OpenTelemetry tracing support
-- ✅ Environment variable configuration
-- ✅ Docker deployment ready
-- ✅ Retry logic and circuit breaker for resilience
-
-#### Quick Start (Zero Code)
-
 ```bash
-# Start an agent server without writing any code
-omniserve quickstart --provider gemini --model gemini-2.0-flash --port 8000
+# Zero code - start immediately
+omniserve quickstart --provider gemini --model gemini-2.0-flash
 
-# Or run your existing agent file
-omniserve run --agent my_agent.py --port 8000 --rate-limit 100
+# Or deploy your agent
+omniserve run --agent my_agent.py --port 8000
 ```
 
-#### Python Usage
+**What you get:**
 
+| Feature | Description |
+|---------|-------------|
+| 🔌 **REST + SSE** | Sync and streaming endpoints out of the box |
+| 🔐 **Auth & Rate Limits** | Bearer token auth, configurable rate limiting |
+| 📊 **Observability** | Prometheus metrics, request logging |
+| 🐳 **Docker Ready** | One command to generate production Dockerfile |
+| 🔄 **Resilience** | Built-in retry logic and circuit breaker |
+
+---
+
+#### Quick Start
+
+**Option 1: CLI (Zero Code)**
+```bash
+omniserve quickstart --provider openai --model gpt-4o --port 8000
+```
+
+**Option 2: Python API**
 ```python
 from omnicoreagent import OmniCoreAgent, OmniServe, OmniServeConfig
 
 agent = OmniCoreAgent(
-    name="ProductionAgent",
-    system_instruction="You are a helpful assistant.",
+    name="MyAgent",
     model_config={"provider": "gemini", "model": "gemini-2.0-flash"},
 )
 
-# Configure the server
-config = OmniServeConfig(
+server = OmniServe(agent, config=OmniServeConfig(
     port=8000,
-    cors_origins=["https://myapp.com"],
     auth_enabled=True,
-    auth_token="my-secret-token",
+    auth_token="secret",
     rate_limit_enabled=True,
-    rate_limit_requests=100,  # 100 requests per minute
-)
-
-# Start the server (blocking)
-server = OmniServe(agent, config=config)
+    rate_limit_requests=100,
+))
 server.start()
 ```
+
+---
 
 #### API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/run` | SSE streaming response |
-| POST | `/run/sync` | JSON response |
-| GET | `/health` | Health check |
-| GET | `/ready` | Readiness check |
-| GET | `/prometheus` | Prometheus metrics |
-| GET | `/tools` | List available tools |
-| GET | `/metrics` | Agent usage metrics |
-| GET | `/events/{session_id}` | Get session events |
-| GET | `/sessions/{session_id}` | Get session history |
-| DELETE | `/sessions/{session_id}` | Clear session |
+| `POST` | `/run` | SSE streaming response |
+| `POST` | `/run/sync` | JSON response (blocking) |
+| `GET` | `/health` | Health check |
+| `GET` | `/prometheus` | Prometheus metrics |
+| `GET` | `/tools` | List available tools |
+| `GET` | `/docs` | Swagger UI |
 
-#### Environment Variables
+---
 
-All settings can be configured via environment variables with `OMNISERVE_` prefix:
+#### 🐳 Docker Deployment
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `OMNISERVE_HOST` | Host to bind to | `0.0.0.0` |
-| `OMNISERVE_PORT` | Port to bind to | `8000` |
-| `OMNISERVE_WORKERS` | Number of worker processes | `1` |
-| `OMNISERVE_API_PREFIX` | API path prefix (e.g., `/api/v1`) | `""` |
-| `OMNISERVE_ENABLE_DOCS` | Enable Swagger UI at `/docs` | `true` |
-| `OMNISERVE_ENABLE_REDOC` | Enable ReDoc at `/redoc` | `true` |
-| `OMNISERVE_CORS_ENABLED` | Enable CORS middleware | `true` |
-| `OMNISERVE_CORS_ORIGINS` | Comma-separated allowed origins | `*` |
-| `OMNISERVE_CORS_CREDENTIALS` | Allow credentials in CORS | `true` |
-| `OMNISERVE_AUTH_ENABLED` | Enable Bearer token auth | `false` |
-| `OMNISERVE_AUTH_TOKEN` | Bearer token for authentication | — |
-| `OMNISERVE_REQUEST_LOGGING` | Log incoming requests | `true` |
-| `OMNISERVE_LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING, ERROR) | `INFO` |
-| `OMNISERVE_REQUEST_TIMEOUT` | Request timeout in seconds | `300` |
-| `OMNISERVE_RATE_LIMIT_ENABLED` | Enable rate limiting | `false` |
-| `OMNISERVE_RATE_LIMIT_REQUESTS` | Max requests per time window | `100` |
-| `OMNISERVE_RATE_LIMIT_WINDOW` | Rate limit time window in seconds | `60` |
-
-**Example `.env` file:**
+Generate a production-ready Dockerfile:
 
 ```bash
-# Required: Your LLM API key
-LLM_API_KEY=your-api-key-here
+omniserve generate-dockerfile --file my_agent.py
+docker build -t omniserver .
+docker run -p 8000:8000 -e LLM_API_KEY=$LLM_API_KEY omniserver
+```
 
-# Server settings
+**Smart Configuration** — The generator inspects your agent and configures storage automatically:
+
+| Your Agent Uses | Dockerfile Sets |
+|-----------------|-----------------|
+| No memory tools | `AGENT_PATH`, `OMNICOREAGENT_ARTIFACTS_DIR` |
+| Local memory | + `OMNICOREAGENT_MEMORY_DIR=/tmp/memories` |
+| S3/R2 memory | Pass credentials at runtime with `-e` |
+
+<details>
+<summary><strong>Example: S3 Memory Backend</strong></summary>
+
+```bash
+docker run -p 8000:8000 \
+  -e LLM_API_KEY=$LLM_API_KEY \
+  -e AWS_S3_BUCKET=my-bucket \
+  -e AWS_ACCESS_KEY_ID=... \
+  -e AWS_SECRET_ACCESS_KEY=... \
+  -e AWS_REGION=us-east-1 \
+  omniserver
+```
+
+</details>
+
+---
+
+#### CLI Reference
+
+```bash
+omniserve quickstart    # Zero-code server
+omniserve run           # Run your agent file
+omniserve config        # View/generate config
+omniserve generate-dockerfile  # Generate Dockerfile
+```
+
+<details>
+<summary><strong>📋 Environment Variables</strong></summary>
+
+All settings via `OMNISERVE_` prefix. Environment variables override code values.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OMNISERVE_PORT` | `8000` | Server port |
+| `OMNISERVE_HOST` | `0.0.0.0` | Server host |
+| `OMNISERVE_AUTH_ENABLED` | `false` | Enable Bearer auth |
+| `OMNISERVE_AUTH_TOKEN` | — | Auth token |
+| `OMNISERVE_RATE_LIMIT_ENABLED` | `false` | Enable rate limiting |
+| `OMNISERVE_RATE_LIMIT_REQUESTS` | `100` | Requests per window |
+| `OMNISERVE_RATE_LIMIT_WINDOW` | `60` | Window in seconds |
+| `OMNISERVE_CORS_ORIGINS` | `*` | Allowed origins |
+| `OMNISERVE_ENABLE_DOCS` | `true` | Swagger UI |
+| `OMNISERVE_LOG_LEVEL` | `INFO` | Log level |
+
+**Example `.env`:**
+```bash
+LLM_API_KEY=your-key
 OMNISERVE_PORT=8000
-OMNISERVE_LOG_LEVEL=INFO
-
-# Security
 OMNISERVE_AUTH_ENABLED=true
-OMNISERVE_AUTH_TOKEN=my-secret-token
-OMNISERVE_CORS_ORIGINS=https://myapp.com
-
-# Rate limiting
-OMNISERVE_RATE_LIMIT_ENABLED=true
-OMNISERVE_RATE_LIMIT_REQUESTS=100
-OMNISERVE_RATE_LIMIT_WINDOW=60
+OMNISERVE_AUTH_TOKEN=secret
 ```
 
+</details>
 
-#### Docker Deployment
+<details>
+<summary><strong>🔧 Advanced: Resilience Patterns</strong></summary>
 
-Deploy with the full observability stack (Prometheus + Grafana):
-
-```bash
-cd docker
-cp .env.example .env
-# Edit .env with your LLM_API_KEY
-docker-compose up
-```
-
-**Services:**
-- **OmniServe**: http://localhost:8000 (API + Swagger UI)
-- **Prometheus**: http://localhost:9090 (Metrics)
-- **Grafana**: http://localhost:3000 (Dashboards, login: admin/admin)
-
-#### Extensibility
-
-Import components to build custom resilience patterns:
+Import retry and circuit breaker for custom use:
 
 ```python
-from omnicoreagent.omni_agent.omni_serve import (
-    RetryConfig,
-    CircuitBreaker,
-    with_retry,
-    get_metrics,
-)
+from omnicoreagent.omni_agent.omni_serve import RetryConfig, CircuitBreaker, with_retry
 
-# Add retry to any async function
 @with_retry(RetryConfig(max_retries=5, strategy="exponential"))
 async def call_external_api():
     ...
 
-# Circuit breaker for failure protection
-breaker = CircuitBreaker("my-api", failure_threshold=3, timeout=60)
+breaker = CircuitBreaker("api", failure_threshold=3, timeout=60)
 async with breaker:
     result = await risky_call()
-
-# Access Prometheus metrics programmatically
-metrics = get_metrics()
-print(metrics.to_prometheus())
 ```
 
-#### CLI Commands
+</details>
 
-```bash
-# Show help
-omniserve --help
-
-# Quickstart (zero code)
-omniserve quickstart --provider openai --model gpt-4o
-
-# Run with an agent file
-omniserve run --agent my_agent.py --port 8000 --auth-token secret
-
-# Generate .env template
-omniserve config --env-example > .env
-
-# View current config from environment
-omniserve config --show
-
-# 🐳 Generate Docker Deployment
-omniserve generate-deployment --file <agent_file_path>
-```
-
-#### Production Deployment Generator
-
-Ship your agents to production in seconds with our built-in Docker generator. This tool inspects your agent code and auto-generates a production-ready `docker-compose.yml` and `Dockerfile`.
-
-**Features:**
-*   **Smart Inspection**: Auto-configures S3/R2 memory if detected in your code.
-*   **Persistent Storage**: Mounts `.omnicoreagent_config` and `.omnicoreagent_artifacts` volumes with correct permissions.
-*   **Universal**: Works with simple agent scripts (`omniserve run`) AND full OmniServe apps (`python app.py`).
-
-**Requirements:**
-Your file must define either:
-1.  An `agent` variable (e.g., `agent = OmniCoreAgent(...)`, `agent = DeepAgent(...)`)
-2.  A `create_agent()` function that returns an agent (for complex setups).
-
-```bash
-omniserve generate-deployment --file cookbook/omniserve/python_api.py
-```
-
-> 💡 **When to Use**: Use OmniServe when you need to deploy agents as APIs — perfect for microservices, webhooks, chatbots, and any application that needs to consume agent capabilities over HTTP.
+> 💡 **When to Use**: OmniServe is perfect for deploying agents as microservices, webhooks, chatbots, or any HTTP-accessible AI capability.
 
 ---
+
 
 ## 📚 Examples & Cookbook
 

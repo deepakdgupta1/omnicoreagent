@@ -52,106 +52,48 @@ async def run_agent_stream(
     session_id: str,
 ) -> AsyncGenerator[str, None]:
     """
-    Run the agent and stream events via SSE.
-
-    This function:
-    1. Starts the agent.run() task
-    2. Streams events as they occur
-    3. Yields the final result when complete
-
+    Run the agent and stream result via SSE.
+    
+    Simplified implementation that just waits for the final result
+    without intermediate event streaming, to ensure stability.
+    
     Args:
         agent: The agent to run (OmniCoreAgent or DeepAgent)
         query: The user query
         session_id: Session ID for the conversation
-
+        
     Yields:
         SSE-formatted event strings
     """
-    # Track completion
-    run_complete = asyncio.Event()
-    result = {"data": None, "error": None}
-
-    async def run_agent():
-        """Run the agent and capture result."""
-        try:
-            response = await agent.run(query, session_id=session_id)
-            result["data"] = response
-        except Exception as e:
-            result["error"] = str(e)
-            logger.error(f"OmniServe SSE: Agent run error: {e}")
-        finally:
-            run_complete.set()
-
-    # Start agent run as background task
-    agent_task = asyncio.create_task(run_agent())
-
     # Yield session start event
     yield format_sse_event("session", {"session_id": session_id, "status": "started"})
-
-    # Stream events while agent is running
+    
     try:
-        # Create event streaming task
-        async def stream_events():
-            try:
-                async for event in agent.stream_events(session_id):
-                    if hasattr(event, "model_dump"):
-                        event_data = event.model_dump()
-                    elif hasattr(event, "dict"):
-                        event_data = event.dict()
-                    elif isinstance(event, dict):
-                        event_data = event
-                    else:
-                        event_data = {"data": str(event)}
-
-                    event_type = event_data.get("type", "event")
-                    if isinstance(event_type, str):
-                        pass
-                    elif hasattr(event_type, "value"):
-                        event_type = event_type.value
-                    else:
-                        event_type = str(event_type)
-
-                    yield format_sse_event(event_type, event_data)
-                    
-                    # Check if this is the FINAL_ANSWER event - stream is complete
-                    if event_type == "final_answer":
-                        return
-            except Exception as e:
-                logger.error(f"OmniServe SSE: Event streaming error: {e}")
-                yield format_sse_event("error", {"error": str(e)})
-
-        # Stream events - the generator will exit when FINAL_ANSWER is received
-        async for sse_event in stream_events():
-            yield sse_event
-
-    except asyncio.CancelledError:
-        agent_task.cancel()
-        raise
-
-    # Wait for agent to complete if not already
-    if not run_complete.is_set():
-        await asyncio.wait_for(run_complete.wait(), timeout=300)
-
-    # Yield final result
-    if result["error"]:
-        yield format_sse_event(
-            "error",
-            {
-                "error": result["error"],
-                "session_id": session_id,
-            },
-        )
-    else:
+        # Run agent directly (blocking/async wait)
+        response = await agent.run(query, session_id=session_id)
+        
+        # Yield complete event with result
         yield format_sse_event(
             "complete",
             {
                 "session_id": session_id,
-                "response": result["data"].get("response", ""),
-                "agent_name": result["data"].get("agent_name", ""),
-                "metric": result["data"].get("metric"),
+                "response": response.get("response", ""),
+                "agent_name": response.get("agent_name", ""),
+                "metric": response.get("metric"),
             },
         )
-
+        
+    except Exception as e:
+        logger.error(f"OmniServe SSE: Agent run error: {e}")
+        yield format_sse_event(
+            "error",
+            {
+                "error": str(e),
+                "session_id": session_id,
+            },
+        )
+        
+    # Yield session ended event
     yield format_sse_event("session", {"session_id": session_id, "status": "ended"})
 
 

@@ -23,6 +23,10 @@ from omnicoreagent.core.summarizer.tokenizer import count_tokens
 from omnicoreagent.core.utils import logger
 
 
+# Default artifacts directory - configurable via env var for cloud deployments
+DEFAULT_ARTIFACTS_DIR = os.environ.get("OMNICOREAGENT_ARTIFACTS_DIR", ".omnicoreagent_artifacts")
+
+
 @dataclass
 class OffloadConfig:
     """Configuration for tool response offloading."""
@@ -32,9 +36,14 @@ class OffloadConfig:
     threshold_bytes: int = 2000
     max_preview_tokens: int = 150
     max_preview_lines: int = 10
-    storage_dir: str = ".omnicoreagent_artifacts"
+    storage_dir: str = None  # Set in __post_init__
     retention_days: int = 7
     include_metadata: bool = True
+
+    def __post_init__(self):
+        """Set defaults that depend on env vars."""
+        if self.storage_dir is None:
+            self.storage_dir = DEFAULT_ARTIFACTS_DIR
 
     @classmethod
     def from_dict(cls, config: dict) -> "OffloadConfig":
@@ -48,7 +57,7 @@ class OffloadConfig:
             threshold_bytes=config.get("threshold_bytes", 2000),
             max_preview_tokens=config.get("max_preview_tokens", 150),
             max_preview_lines=config.get("max_preview_lines", 10),
-            storage_dir=config.get("storage_dir", ".omnicoreagent_artifacts"),
+            storage_dir=config.get("storage_dir", DEFAULT_ARTIFACTS_DIR),
             retention_days=config.get("retention_days", 7),
             include_metadata=config.get("include_metadata", True),
         )
