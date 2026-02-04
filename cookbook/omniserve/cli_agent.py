@@ -149,8 +149,7 @@ Use tools when helpful. Be concise and clear.""",
     local_tools=tools,
     debug=False,
     agent_config={
-        "memory_tool_backend": "local",
-       
+        "memory_tool_backend": "local",  # Use "s3" or "r2" for cloud storage
     }
 )
 

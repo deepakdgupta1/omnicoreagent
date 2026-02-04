@@ -51,6 +51,9 @@ print(result["response"])
 ### 🏆 I want to see full production applications
 → **[showcase](./showcase)** — Complete applications with Docker, Prometheus, Grafana, and more.
 
+### 🌐 I want to deploy as an API
+→ **[omniserve](./omniserve)** — Deploy agents as REST/SSE APIs with one command.
+
 ### 🚀 I want to run in production
 → **[production](./production)** — Metrics, guardrails, and observability.
 
@@ -64,6 +67,7 @@ cookbook/
 ├── deep_agent/          # 🆕 Complex RPI workflows with sub-agents
 ├── workflows/           # Multi-agent orchestration patterns
 ├── background_agents/   # Scheduled and autonomous agents
+├── omniserve/           # 🆕 Deploy agents as REST/SSE APIs
 ├── advanced_agent/      # Real-world application examples
 ├── showcase/            # Full production applications
 └── production/          # Production-ready configurations

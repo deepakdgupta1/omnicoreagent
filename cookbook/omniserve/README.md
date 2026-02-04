@@ -2,109 +2,136 @@
 
 Production-ready API server examples for OmniCoreAgent and DeepAgent.
 
+---
+
+## 📦 Agent File Requirements
+
+Your agent file must define **one of the following**:
+
+```python
+# Option 1: `agent` variable
+agent = OmniCoreAgent(...)
+
+# Option 2: `create_agent()` function
+def create_agent():
+    return OmniCoreAgent(...)
+```
+
+---
+
 ## Examples
 
-| Example | Description |
-|---------|-------------|
-| [python_api.py](./python_api.py) | Full Python API with all config options |
-| [cli_agent.py](./cli_agent.py) | Agent file for CLI deployment |
-| [resilience_patterns.py](./resilience_patterns.py) | Retry, circuit breaker, metrics |
+| Example | Description | How to Run |
+|---------|-------------|------------|
+| [cli_agent.py](./cli_agent.py) | Agent file for CLI deployment | `omniserve run --agent cli_agent.py` |
+| [python_api.py](./python_api.py) | Full Python API with all config options | `python python_api.py` |
+| [resilience_patterns.py](./resilience_patterns.py) | Retry, circuit breaker, metrics | `python resilience_patterns.py` |
 
 ---
 
 ## Quick Start
 
-### Option 1: Python API (Direct)
-```bash
-uv run python cookbook/omniserve/python_api.py
-```
+### Option 1: CLI (Zero-code deployment)
 
-### Option 2: CLI (Zero-code deployment)
 ```bash
-# Quickstart with defaults
+# Quickstart with defaults (no agent file needed)
 omniserve quickstart --provider gemini --model gemini-2.0-flash
 
 # Run with your agent file
-omniserve run --agent cookbook/omniserve/cli_agent.py --port 8000 --auth-token secret --rate-limit 100
+omniserve run --agent cookbook/omniserve/cli_agent.py --port 8000
+
+# With authentication and rate limiting
+omniserve run --agent cookbook/omniserve/cli_agent.py \
+  --port 8000 \
+  --auth-token secret \
+  --rate-limit 100
 ```
+
+### Option 2: Python API (Programmatic control)
+
+```bash
+# Run Python script directly
+python cookbook/omniserve/python_api.py
+```
+
+> [!WARNING]
+> **Environment Variable Precedence:**
+> `.env` variables **ALWAYS override** values set in `OmniServeConfig`.
+> ```python
+> # In code: port=8000
+> # In .env: OMNISERVE_PORT=9000
+> # Result: Server runs on port 9000 (env wins!)
+> ```
 
 ---
 
 ## Environment Variables
 
-All config via `OMNISERVE_*` prefix. **Environment variables ALWAYS override code values.**
+All config via `OMNISERVE_*` prefix.
 
-```python
-# Code says port=8000
-config = OmniServeConfig(port=8000)
-
-# But OMNISERVE_PORT=9000 in .env
-# Result: port will be 9000 (env wins!)
-```
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `OMNISERVE_HOST` | Host to bind to | `0.0.0.0` |
-| `OMNISERVE_PORT` | Port to bind to | `8000` |
-| `OMNISERVE_WORKERS` | Worker processes | `1` |
-| `OMNISERVE_API_PREFIX` | API path prefix | `""` |
-| `OMNISERVE_ENABLE_DOCS` | Swagger UI | `true` |
-| `OMNISERVE_ENABLE_REDOC` | ReDoc | `true` |
-| `OMNISERVE_CORS_ENABLED` | Enable CORS | `true` |
-| `OMNISERVE_CORS_ORIGINS` | Allowed origins | `*` |
-| `OMNISERVE_AUTH_ENABLED` | Enable auth | `false` |
-| `OMNISERVE_AUTH_TOKEN` | Bearer token | — |
-| `OMNISERVE_RATE_LIMIT_ENABLED` | Rate limiting | `false` |
-| `OMNISERVE_RATE_LIMIT_REQUESTS` | Requests/window | `100` |
-| `OMNISERVE_RATE_LIMIT_WINDOW` | Window seconds | `60` |
-| `OMNISERVE_REQUEST_LOGGING` | Log requests | `true` |
-| `OMNISERVE_LOG_LEVEL` | Log level | `INFO` |
-| `OMNISERVE_REQUEST_TIMEOUT` | Timeout seconds | `300` |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OMNISERVE_HOST` | `0.0.0.0` | Server host |
+| `OMNISERVE_PORT` | `8000` | Server port |
+| `OMNISERVE_WORKERS` | `1` | Worker processes |
+| `OMNISERVE_API_PREFIX` | `""` | API path prefix |
+| `OMNISERVE_ENABLE_DOCS` | `true` | Swagger UI at `/docs` |
+| `OMNISERVE_ENABLE_REDOC` | `true` | ReDoc at `/redoc` |
+| `OMNISERVE_CORS_ENABLED` | `true` | Enable CORS |
+| `OMNISERVE_CORS_ORIGINS` | `*` | Allowed origins |
+| `OMNISERVE_AUTH_ENABLED` | `false` | Enable Bearer auth |
+| `OMNISERVE_AUTH_TOKEN` | — | Bearer token value |
+| `OMNISERVE_RATE_LIMIT_ENABLED` | `false` | Rate limiting |
+| `OMNISERVE_RATE_LIMIT_REQUESTS` | `100` | Requests/window |
+| `OMNISERVE_RATE_LIMIT_WINDOW` | `60` | Window seconds |
+| `OMNISERVE_REQUEST_LOGGING` | `true` | Log requests |
+| `OMNISERVE_LOG_LEVEL` | `INFO` | Log level |
+| `OMNISERVE_REQUEST_TIMEOUT` | `300` | Timeout seconds |
 
 ---
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/run` | SSE streaming response |
-| POST | `/run/sync` | JSON response |
-| GET | `/health` | Health check |
-| GET | `/ready` | Readiness check |
-| GET | `/prometheus` | Prometheus metrics |
-| GET | `/tools` | List available tools |
-| GET | `/metrics` | Agent usage metrics |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/run` | Yes* | SSE streaming response |
+| POST | `/run/sync` | Yes* | JSON response |
+| GET | `/health` | No | Health check |
+| GET | `/ready` | No | Readiness check |
+| GET | `/prometheus` | No | Prometheus metrics |
+| GET | `/tools` | Yes* | List available tools |
+| GET | `/metrics` | Yes* | Agent usage metrics |
+| GET | `/docs` | No | Swagger UI |
+| GET | `/redoc` | No | ReDoc UI |
+
+*Auth required only if `OMNISERVE_AUTH_ENABLED=true` or `--auth-token` is set.
 
 ---
 
 ## Docker Deployment
 
-Generate a Dockerfile for your agent with a single command:
-
 ```bash
+# Generate Dockerfile
 omniserve generate-dockerfile --file cookbook/omniserve/cli_agent.py
-```
 
-This generates a production-ready `Dockerfile` that:
-- Copies all files into the image
-- Sets environment variables for ephemeral storage (cloud-ready)
-- Uses `omniserve run` with your agent
-
-### Build and Run
-
-```bash
+# Build and run
 docker build -t omniserver .
 docker run -p 8000:8000 -e LLM_API_KEY=$LLM_API_KEY omniserver
 ```
 
-### Cloud Deployment
+### Cloud Deployment (Cloud Run, AWS Fargate, Railway)
 
-For Cloud Run, AWS Fargate, or Railway, the generated Dockerfile sets:
+The generated Dockerfile sets:
 - `OMNICOREAGENT_ARTIFACTS_DIR=/tmp/.omnicoreagent_artifacts`
 - `OMNICOREAGENT_MEMORY_DIR=/tmp/memories`
 
-**Requirements:**
-Your agent file must define either:
-1. An `agent` variable (e.g., `agent = OmniCoreAgent(...)`)
-2. A `create_agent()` function that returns an agent
+For S3/R2 memory, pass credentials at runtime:
 
+```bash
+docker run -p 8000:8000 \
+  -e LLM_API_KEY=$LLM_API_KEY \
+  -e AWS_S3_BUCKET=my-bucket \
+  -e AWS_ACCESS_KEY_ID=... \
+  -e AWS_SECRET_ACCESS_KEY=... \
+  omniserver
+```
