@@ -1,0 +1,230 @@
+---
+title: Basic Usage
+description: 'Common patterns for using OmniCoreAgent in your projects'
+icon: 'book-open'
+---
+
+# Basic Usage
+
+This guide covers the most common patterns you'll need when working with OmniCoreAgent — from running your first query to handling errors in production.
+
+---
+
+## Running an Agent
+
+Every interaction starts with `agent.run()`. It returns a dictionary with the agent's response and metadata.
+
+```python
+import asyncio
+from omnicoreagent import OmniCoreAgent
+
+async def main():
+    agent = OmniCoreAgent(
+        name="my_agent",
+        system_instruction="You are a helpful assistant.",
+        model_config={"provider": "openai", "model": "gpt-4o"}
+    )
+
+    result = await agent.run("What is the capital of France?")
+
+    print(result["response"])       # The agent's text reply
+    print(result["usage"])          # Token usage stats
+    print(result["tool_calls"])     # Tools the agent invoked (if any)
+
+    await agent.cleanup()
+
+asyncio.run(main())
+```
+
+---
+
+## Session Management
+
+Use `session_id` to give your agent persistent memory across multiple calls. Without it, each call is stateless.
+
+```python
+# First interaction — agent learns the user's name
+await agent.run("My name is Abiola.", session_id="user_42")
+
+# Later interaction — agent remembers
+result = await agent.run("What's my name?", session_id="user_42")
+# → "Your name is Abiola."
+```
+
+### Retrieving History
+
+```python
+history = await agent.get_history(session_id="user_42")
+for message in history:
+    print(f"{message['role']}: {message['content'][:80]}")
+```
+
+### Clearing History
+
+```python
+await agent.clear_history(session_id="user_42")
+```
+
+---
+
+## Adding Memory Persistence
+
+By default, history is stored in-memory (lost on restart). Add a `MemoryRouter` to persist across restarts.
+
+```python
+from omnicoreagent import OmniCoreAgent, MemoryRouter
+
+agent = OmniCoreAgent(
+    name="persistent_agent",
+    system_instruction="You are a helpful assistant.",
+    model_config={"provider": "openai", "model": "gpt-4o"},
+    memory_router=MemoryRouter("redis")  # or "postgresql", "mongodb", "sqlite"
+)
+```
+
+<Tip>
+You can switch backends at runtime without restarting:
+```python
+await agent.switch_memory_store("mongodb")
+```
+</Tip>
+
+---
+
+## Using Tools
+
+### MCP Tools (External Servers)
+
+Connect to any MCP-compatible tool server:
+
+```python
+agent = OmniCoreAgent(
+    name="tool_agent",
+    system_instruction="You can manage files and search the web.",
+    model_config={"provider": "openai", "model": "gpt-4o"},
+    mcp_tools=[
+        {
+            "name": "filesystem",
+            "transport_type": "stdio",
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+        }
+    ]
+)
+
+await agent.connect_mcp_servers()
+result = await agent.run("List all files in /tmp")
+```
+
+### Local Tools (Custom Python Functions)
+
+Register any Python function as a tool the agent can call:
+
+```python
+from omnicoreagent import OmniCoreAgent, ToolRegistry
+
+tools = ToolRegistry()
+
+@tools.register_tool("get_weather")
+def get_weather(city: str) -> dict:
+    """Get current weather for a city."""
+    return {"city": city, "temp": "22°C", "condition": "Sunny"}
+
+agent = OmniCoreAgent(
+    name="weather_agent",
+    system_instruction="You help with weather queries.",
+    model_config={"provider": "openai", "model": "gpt-4o"},
+    local_tools=tools
+)
+```
+
+### Community Tools (Pre-built)
+
+Use 40+ ready-made tools without writing any code:
+
+```python
+from omnicoreagent.community import TavilySearch, WikipediaTool
+
+agent = OmniCoreAgent(
+    name="research_agent",
+    system_instruction="You are a research assistant.",
+    model_config={"provider": "openai", "model": "gpt-4o"},
+    community_tools=[TavilySearch(), WikipediaTool()]
+)
+```
+
+---
+
+## Event Streaming
+
+Listen to agent events in real-time — useful for building UIs, logging, or debugging:
+
+```python
+from omnicoreagent import EventRouter
+
+agent = OmniCoreAgent(
+    name="streaming_agent",
+    system_instruction="You are a helpful assistant.",
+    model_config={"provider": "openai", "model": "gpt-4o"},
+    event_router=EventRouter("callback")
+)
+
+@agent.on_event("tool_call")
+async def on_tool(event):
+    print(f"🔧 Tool called: {event['tool_name']}")
+
+@agent.on_event("response")
+async def on_response(event):
+    print(f"💬 Response: {event['content'][:100]}")
+```
+
+---
+
+## Error Handling
+
+Wrap agent calls with try/except for production use:
+
+```python
+from omnicoreagent.core.exceptions import (
+    ToolExecutionError,
+    TokenLimitError,
+    MCPConnectionError
+)
+
+try:
+    result = await agent.run("Analyze this dataset", session_id="user_1")
+except ToolExecutionError as e:
+    print(f"Tool failed: {e.tool_name} — {e.message}")
+except TokenLimitError:
+    print("Conversation too long — clear history or increase limit")
+except MCPConnectionError as e:
+    print(f"MCP server unreachable: {e}")
+```
+
+---
+
+## Common Troubleshooting
+
+| Error | Fix |
+|-------|-----|
+| `Invalid API key` | Check `.env`: `LLM_API_KEY=your_key` |
+| `ModuleNotFoundError` | `pip install omnicoreagent` |
+| `Redis connection failed` | Start Redis or use `MemoryRouter("in_memory")` |
+| `MCP connection refused` | Ensure MCP server is running and path is correct |
+| `Token limit exceeded` | Increase `total_tokens_limit` or enable context management |
+
+---
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Configuration" icon="gear" href="/docs/how-to-guides/configuration">
+    Full reference for env vars, agent settings, and models
+  </Card>
+  <Card title="Memory Deep Dive" icon="database" href="/docs/core-concepts/memory">
+    5 backends with runtime switching and summarization
+  </Card>
+  <Card title="DeepAgent" icon="layer-group" href="/docs/core-concepts/deep-agent">
+    Multi-agent orchestration for complex tasks
+  </Card>
+</CardGroup>

@@ -61,6 +61,7 @@
                     {
                         "group": "How-To Guides",
                         "pages": [
+                            "docs/how-to-guides/basic-usage",
                             "docs/how-to-guides/configuration",
                             "docs/how-to-guides/advanced-tools",
                             "docs/how-to-guides/observability",

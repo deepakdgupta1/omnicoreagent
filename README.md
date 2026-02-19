@@ -123,7 +123,7 @@ print(result["response"])
 
 ## 🎯 Core Features
 
-> 📖 **Full documentation**: [omnirexflora-labs.github.io/omnicoreagent](https://docs-omnicoreagent.omnirexfloralabs.com/docs)
+> 📖 **Full documentation**: [docs-omnicoreagent.omnirexfloralabs.com/docs](https://docs-omnicoreagent.omnirexfloralabs.com/docs)
 
 | # | Feature | Description | Docs |
 |---|---------|-------------|------|
