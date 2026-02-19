@@ -21,7 +21,7 @@
   <a href="#-see-it-in-action">See It In Action</a> •
   <a href="./cookbook">📚 Cookbook</a> •
   <a href="#-core-features">Features</a> •
-  <a href="https://omnirexflora-labs.github.io/omnicoreagent">Docs</a>
+  <a href="https://docs-omnicoreagent.omnirexfloralabs.com/docs">Docs</a>
 </p>
 
 ---
@@ -123,28 +123,28 @@ print(result["response"])
 
 ## 🎯 Core Features
 
-> 📖 **Full documentation**: [omnirexflora-labs.github.io/omnicoreagent](https://omnirexflora-labs.github.io/omnicoreagent)
+> 📖 **Full documentation**: [omnirexflora-labs.github.io/omnicoreagent](https://docs-omnicoreagent.omnirexfloralabs.com/docs)
 
 | # | Feature | Description | Docs |
 |---|---------|-------------|------|
-| 1 | **OmniCoreAgent** | The heart of the framework — production agent with all features | [Overview →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/overview) |
-| 2 | **Multi-Tier Memory** | 5 backends (Redis, MongoDB, PostgreSQL, SQLite, in-memory) with runtime switching | [Memory →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/memory) |
-| 3 | **Context Engineering** | Dual-layer system: agent loop context management + tool response offloading | [Context →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/context-engineering) |
-| 4 | **Event System** | Real-time event streaming with runtime switching | [Events →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/events) |
-| 5 | **MCP Client** | Connect to any MCP server (stdio, streamable_http, SSE) with OAuth | [MCP →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/mcp) |
-| 6 | **DeepAgent** | Multi-agent orchestration with automatic task decomposition | [DeepAgent →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/deep-agent) |
-| 7 | **Local Tools** | Register any Python function as an AI tool via ToolRegistry | [Local Tools →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/local-tools) |
-| 8 | **Community Tools** | 100+ pre-built tools (search, AI, comms, databases, DevOps, finance) | [Community Tools →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/community-tools) |
-| 9 | **Agent Skills** | Polyglot packaged capabilities (Python, Bash, Node.js) | [Skills →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/skills) |
-| 10 | **Workspace Memory** | Persistent file storage with S3/R2/Local backends | [Workspace →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/workspace-memory) |
-| 11 | **Sub-Agents** | Delegate tasks to specialized agents | [Sub-Agents →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/sub-agents) |
-| 12 | **Background Agents** | Schedule autonomous tasks on intervals | [Background →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/background-agents) |
-| 13 | **Workflows** | Sequential, Parallel, and Router agent orchestration | [Workflows →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/workflows) |
-| 14 | **BM25 Tool Retrieval** | Auto-discover relevant tools from 1000+ using BM25 search | [Advanced Tools →](https://omnirexflora-labs.github.io/omnicoreagent/docs/how-to-guides/advanced-tools) |
-| 15 | **Guardrails** | Prompt injection protection with configurable sensitivity | [Guardrails →](https://omnirexflora-labs.github.io/omnicoreagent/docs/core-concepts/guardrails) |
-| 16 | **Observability** | Per-request metrics + Opik distributed tracing | [Observability →](https://omnirexflora-labs.github.io/omnicoreagent/docs/how-to-guides/observability) |
-| 17 | **Universal Models** | 9 providers via LiteLLM (OpenAI, Anthropic, Gemini, Groq, Ollama, etc.) | [Models →](https://omnirexflora-labs.github.io/omnicoreagent/docs/how-to-guides/models) |
-| 18 | **OmniServe** | Turn any agent into a production REST/SSE API with one command | [OmniServe →](https://omnirexflora-labs.github.io/omnicoreagent/docs/how-to-guides/omniserve) |
+| 1 | **OmniCoreAgent** | The heart of the framework — production agent with all features | [Overview →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/overview) |
+| 2 | **Multi-Tier Memory** | 5 backends (Redis, MongoDB, PostgreSQL, SQLite, in-memory) with runtime switching | [Memory →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/memory) |
+| 3 | **Context Engineering** | Dual-layer system: agent loop context management + tool response offloading | [Context →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/context-engineering) |
+| 4 | **Event System** | Real-time event streaming with runtime switching | [Events →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/events) |
+| 5 | **MCP Client** | Connect to any MCP server (stdio, streamable_http, SSE) with OAuth | [MCP →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/mcp) |
+| 6 | **DeepAgent** | Multi-agent orchestration with automatic task decomposition | [DeepAgent →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/deep-agent) |
+| 7 | **Local Tools** | Register any Python function as an AI tool via ToolRegistry | [Local Tools →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/local-tools) |
+| 8 | **Community Tools** | 100+ pre-built tools (search, AI, comms, databases, DevOps, finance) | [Community Tools →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/community-tools) |
+| 9 | **Agent Skills** | Polyglot packaged capabilities (Python, Bash, Node.js) | [Skills →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/skills) |
+| 10 | **Workspace Memory** | Persistent file storage with S3/R2/Local backends | [Workspace →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/workspace-memory) |
+| 11 | **Sub-Agents** | Delegate tasks to specialized agents | [Sub-Agents →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/sub-agents) |
+| 12 | **Background Agents** | Schedule autonomous tasks on intervals | [Background →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/background-agents) |
+| 13 | **Workflows** | Sequential, Parallel, and Router agent orchestration | [Workflows →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/workflows) |
+| 14 | **BM25 Tool Retrieval** | Auto-discover relevant tools from 1000+ using BM25 search | [Advanced Tools →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/how-to-guides/advanced-tools) |
+| 15 | **Guardrails** | Prompt injection protection with configurable sensitivity | [Guardrails →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/core-concepts/guardrails) |
+| 16 | **Observability** | Per-request metrics + Opik distributed tracing | [Observability →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/how-to-guides/observability) |
+| 17 | **Universal Models** | 9 providers via LiteLLM (OpenAI, Anthropic, Gemini, Groq, Ollama, etc.) | [Models →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/how-to-guides/models) |
+| 18 | **OmniServe** | Turn any agent into a production REST/SSE API with one command | [OmniServe →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/how-to-guides/omniserve) |
 
 ---
 
@@ -203,7 +203,7 @@ agent_config = {
 }
 ```
 
-> 📖 **Full configuration reference**: [Configuration Guide →](https://omnirexflora-labs.github.io/omnicoreagent/docs/how-to-guides/configuration)
+> 📖 **Full configuration reference**: [Configuration Guide →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/how-to-guides/configuration)
 
 ---
 
@@ -234,13 +234,13 @@ pytest tests/ --cov=src --cov-report=term-missing
 | `Redis connection failed` | Start Redis or use `MemoryRouter("in_memory")` |
 | `MCP connection refused` | Ensure MCP server is running |
 
-> 📖 **More troubleshooting**: [Basic Usage Guide →](https://omnirexflora-labs.github.io/omnicoreagent/docs/how-to-guides/basic-usage)
+> 📖 **More troubleshooting**: [Basic Usage Guide →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/how-to-guides/basic-usage)
 
 ---
 
 ## 📝 Changelog
 
-See the full [Changelog →](https://omnirexflora-labs.github.io/omnicoreagent/docs/changelog) for version history.
+See the full [Changelog →](https://docs-omnicoreagent.omnirexfloralabs.com/docs/changelog) for version history.
 
 ---
 
@@ -298,5 +298,5 @@ Built on: [LiteLLM](https://github.com/BerriAI/litellm), [FastAPI](https://fasta
   <a href="https://github.com/omnirexflora-labs/omnicoreagent">⭐ Star us on GitHub</a> •
   <a href="https://github.com/omnirexflora-labs/omnicoreagent/issues">🐛 Report Bug</a> •
   <a href="https://github.com/omnirexflora-labs/omnicoreagent/issues">💡 Request Feature</a> •
-  <a href="https://omnirexflora-labs.github.io/omnicoreagent">📖 Documentation</a>
+  <a href="https://docs-omnicoreagent.omnirexfloralabs.com/docs">📖 Documentation</a>
 </p>
