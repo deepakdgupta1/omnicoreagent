@@ -62,7 +62,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from omnicoreagent import (
+from omnicoreagent import (  # noqa: E402
     OmniCoreAgent,
     ToolRegistry,
     OmniServe,

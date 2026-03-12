@@ -4,6 +4,7 @@ Production E-commerce Personal Shopper Agent
 Real integrations with Shopify, WooCommerce, and inventory systems
 """
 
+import asyncio
 import os
 import requests
 from datetime import datetime
@@ -431,7 +432,7 @@ class ProductionEcommerceAgent:
                 # Parse price range
                 try:
                     price_min, price_max = map(float, price_range.split("-"))
-                except:
+                except (ValueError, AttributeError):
                     price_min, price_max = 0, 500
 
                 # Find matching products

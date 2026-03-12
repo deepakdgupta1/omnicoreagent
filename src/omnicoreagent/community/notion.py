@@ -113,7 +113,7 @@ class NotionSearchPage(NotionBase):
                                 title = val["title"][0]["text"]["content"]
                                 break
                         pages.append(f"{title} ({result['url']})")
-                    except:
+                    except Exception:
                         pages.append(f"Page {result['id']} ({result['url']})")
 
             formatted = "\n".join(pages)

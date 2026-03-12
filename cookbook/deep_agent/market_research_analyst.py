@@ -23,8 +23,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from omnicoreagent import DeepAgent
-from omnicoreagent.community import TavilySearch
+from omnicoreagent import DeepAgent  # noqa: E402
+from omnicoreagent.community import TavilySearch  # noqa: E402
 
 # =============================================================================
 # CONFIGURATION - Real Tools Only
@@ -60,7 +60,7 @@ async def main():
     print("=" * 80)
 
     # Configure Tavily MCP for real internet search
-    mcp_tools = [
+    _mcp_tools = [  # Currently unused; re-enable via mcp_tools= kwarg below
         {
             "name": "tavily-remote-mcp",
             "transport_type": "stdio",
@@ -117,7 +117,7 @@ to investigate in parallel, then synthesize their findings with cross-cutting in
             "provider": "gemini",
             "model": "gemini-2.5-pro",
         },
-        #mcp_tools=mcp_tools,
+        # mcp_tools=mcp_tools,
         local_tools=[tavily_community],
         agent_config={
             "max_steps": 100,  # Increased for deep RPI+ with real search
@@ -136,43 +136,43 @@ to investigate in parallel, then synthesize their findings with cross-cutting in
 
     # Ultra-complex real-world research task
     result = await agent.run("""
-    Conduct a COMPREHENSIVE market entry analysis for launching an "AI-powered DevOps automation platform" 
+    Conduct a COMPREHENSIVE market entry analysis for launching an "AI-powered DevOps automation platform"
     targeting mid-market software companies (100-1000 employees) in 2026.
-    
+
     This is a strategic investment decision requiring REAL, CURRENT market intelligence across:
-    
+
     1. **Competitive Landscape Analysis**:
        - Identify current AI DevOps automation platforms (2024-2026 launches)
        - Map traditional DevOps tool vendors (Jenkins, GitLab, CircleCI, etc.)
        - Analyze positioning, funding, customer base, and differentiation
        - Identify competitive moats and market gaps
-    
+
     2. **Market Dynamics**:
        - Current market size and growth trajectory (latest data)
        - Mid-market adoption rates of AI in DevOps
        - Buying patterns and decision-making processes
        - Pain points driving tool consolidation
-    
+
     3. **Technology Trends**:
        - AI/ML adoption in CI/CD and infrastructure automation (2025-2026)
        - Platform engineering movement impact
        - Code generation and autonomous debugging trends
        - Integration ecosystem requirements (Kubernetes, cloud providers, etc.)
-    
+
     4. **Go-to-Market Strategy**:
        - Pricing models in market (freemium, usage-based, seat-based)
        - Distribution channels (direct, partnerships, cloud marketplaces)
        - Customer acquisition benchmarks for DevOps tools
        - Typical sales cycles and buying committees
-    
+
     5. **Risk Factors**:
        - Regulatory requirements (SOC2, ISO 27001, GDPR)
        - Security and code access concerns
        - Vendor lock-in and switching costs
        - Market timing and macroeconomic factors
-    
+
     DELIVERABLE REQUIREMENTS:
-    
+
     A strategic research report with:
     ✓ Executive summary (3-5 key insights)
     ✓ Detailed findings per domain (with source citations)
@@ -181,7 +181,7 @@ to investigate in parallel, then synthesize their findings with cross-cutting in
     ✓ Clear go/no-go recommendation with detailed rationale
     ✓ Risk mitigation strategies
     ✓ Data limitations and gaps acknowledged
-    
+
     CRITICAL: Use REAL internet search. Cite sources. Note data recency.
     This is a complex, multi-domain research task. Use your full RPI+ capabilities.
     """)

@@ -398,7 +398,7 @@ def create_omnirex_tools() -> ToolRegistry:
             if isinstance(sections, str):
                 try:
                     sections = json.loads(sections)
-                except:
+                except (json.JSONDecodeError, ValueError):
                     parsed_sections = {}
                     matches = re.findall(
                         r"<([a-zA-Z0-9_]+)>\s*(.*?)\s*</\1>", sections, re.DOTALL
@@ -867,7 +867,7 @@ def create_omnirex_tools() -> ToolRegistry:
             try:
                 risk_score = float(risk_score)
                 risk_score = max(1, min(10, risk_score))
-            except:
+            except (ValueError, TypeError):
                 risk_score = 5.0
 
             # Parse highlights - clean XML tags and HTML entities
@@ -900,7 +900,7 @@ def create_omnirex_tools() -> ToolRegistry:
             # Color scheme (OmniRex branding)
             DARK_BLUE = "#1a365d"
             GOLD = "#d4af37"
-            LIGHT_GRAY = "#f8f9fa"
+            _LIGHT_GRAY = "#f8f9fa"  # noqa: F841
             MEDIUM_GRAY = "#6c757d"
             WHITE = "#ffffff"
             GREEN = "#198754"

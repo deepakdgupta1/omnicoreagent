@@ -240,7 +240,7 @@ class ProductionSupportAgent:
                 }
 
                 # Simulate order lookup
-                status_key = order_id[-2:]  # Simple hash from order ID
+                _status_key = order_id[-2:]  # Simple hash from order ID
                 status_index = sum(ord(c) for c in order_id) % len(order_statuses)
                 status = list(order_statuses.keys())[status_index]
                 status_info = order_statuses[status]
@@ -424,7 +424,7 @@ Time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
         support_agent = OmniCoreAgent(
             name="ProductionSupportAgent",
-            system_instruction="""You are a professional customer support agent in a production environment. 
+            system_instruction="""You are a professional customer support agent in a production environment.
 
 CRITICAL RESPONSIBILITIES:
 1. FIRST: Always search knowledge base before creating tickets

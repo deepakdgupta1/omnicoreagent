@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from omnicoreagent import DeepAgent
+from omnicoreagent import DeepAgent  # noqa: E402
 
 
 async def main():

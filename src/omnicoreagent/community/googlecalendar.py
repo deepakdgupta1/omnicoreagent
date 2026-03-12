@@ -38,7 +38,7 @@ class GoogleBase:
             return
 
         token_file = Path(self.token_path)
-        creds_file = Path(self.credentials_path)
+        _creds_file = Path(self.credentials_path)
 
         if token_file.exists():
             try:

@@ -258,7 +258,7 @@ class RedditReply(RedditBase):
                 # Accessing title to force fetch
                 _ = submission.title
                 reply = submission.reply(body=content)
-            except:
+            except Exception:
                 comment = reddit.comment(id=thing_id)
                 reply = comment.reply(body=content)
 

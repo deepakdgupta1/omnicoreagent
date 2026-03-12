@@ -92,9 +92,7 @@ class BaiduSearchTools:
 
         try:
             # baidusearch.search is synchronous
-            results = baidusearch.baidusearch.search(
-                keyword=query, num_results=max_results
-            )
+            results = search(keyword=query, num_results=max_results)
 
             res: List[Dict[str, str]] = []
             for idx, item in enumerate(results, 1):

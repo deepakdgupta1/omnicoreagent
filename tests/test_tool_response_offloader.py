@@ -42,19 +42,19 @@ class TestOffloadConfig:
     def test_default_config(self):
         """Test default configuration values."""
         config = OffloadConfig()
-        assert config.enabled == True
+        assert config.enabled is True
         assert config.threshold_tokens == 500
         assert config.threshold_bytes == 2000
         assert config.max_preview_tokens == 150
         assert config.max_preview_lines == 10
         assert config.storage_dir == "workspace/artifacts"
         assert config.retention_days == 7
-        assert config.include_metadata == True
+        assert config.include_metadata is True
 
     def test_from_dict_empty(self):
         """Test creating config from empty dict uses defaults."""
         config = OffloadConfig.from_dict({})
-        assert config.enabled == True
+        assert config.enabled is True
         assert config.threshold_tokens == 500
 
     def test_from_dict_custom_values(self):
@@ -68,7 +68,7 @@ class TestOffloadConfig:
                 "storage_dir": ".custom_artifacts",
             }
         )
-        assert config.enabled == False
+        assert config.enabled is False
         assert config.threshold_tokens == 1000
         assert config.threshold_bytes == 5000
         assert config.max_preview_tokens == 200
@@ -82,7 +82,7 @@ class TestOffloadConfig:
                 "threshold_tokens": 250,
             }
         )
-        assert config.enabled == True
+        assert config.enabled is True
         assert config.threshold_tokens == 250
         assert config.threshold_bytes == 2000  # default
         assert config.max_preview_tokens == 150  # default
@@ -90,7 +90,7 @@ class TestOffloadConfig:
     def test_from_dict_none(self):
         """Test creating config from None returns defaults."""
         config = OffloadConfig.from_dict(None)
-        assert config.enabled == True
+        assert config.enabled is True
         assert config.threshold_tokens == 500
 
 
@@ -110,7 +110,7 @@ class TestAgentConfigToolOffloadValidation:
             tool_call_timeout=30,
             tool_offload={"enabled": True, "threshold_tokens": 500},
         )
-        assert config.tool_offload["enabled"] == True
+        assert config.tool_offload["enabled"] is True
 
     def test_invalid_threshold_tokens_rejected(self):
         """Test negative threshold_tokens raises ValidationError."""
@@ -194,31 +194,31 @@ class TestShouldOffload:
             config={"enabled": False}, base_dir=self.temp_dir
         )
         large_content = "word " * 1000
-        assert offloader.should_offload(large_content) == False
+        assert offloader.should_offload(large_content) is False
 
     def test_should_offload_small_response(self):
         """Test small response does not trigger offload."""
         small_content = "Hello world"
-        assert self.offloader.should_offload(small_content) == False
+        assert self.offloader.should_offload(small_content) is False
 
     def test_should_offload_exceeds_token_threshold(self):
         """Test response exceeding token threshold triggers offload."""
         large_content = "This is a word. " * 50  # ~100 tokens
-        assert self.offloader.should_offload(large_content) == True
+        assert self.offloader.should_offload(large_content) is True
 
     def test_should_offload_exceeds_byte_threshold(self):
         """Test response exceeding byte threshold triggers offload."""
         large_content = "x" * 250  # 250 bytes > 200 byte threshold
-        assert self.offloader.should_offload(large_content) == True
+        assert self.offloader.should_offload(large_content) is True
 
     def test_should_offload_just_below_threshold(self):
         """Test response just below threshold does not offload."""
         small_content = "word " * 10  # ~20 tokens, ~50 bytes
-        assert self.offloader.should_offload(small_content) == False
+        assert self.offloader.should_offload(small_content) is False
 
     def test_should_offload_empty_string(self):
         """Test empty string does not offload."""
-        assert self.offloader.should_offload("") == False
+        assert self.offloader.should_offload("") is False
 
 
 # ============================================================================

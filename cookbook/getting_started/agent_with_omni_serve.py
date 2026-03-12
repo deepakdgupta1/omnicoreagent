@@ -36,7 +36,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-from omnicoreagent import OmniCoreAgent, OmniServe, OmniServeConfig
+from omnicoreagent import OmniCoreAgent, OmniServe, OmniServeConfig  # noqa: E402
 
 
 def main():

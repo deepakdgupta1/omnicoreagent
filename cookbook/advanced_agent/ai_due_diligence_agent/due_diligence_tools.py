@@ -22,7 +22,7 @@ except ImportError:
 
 # Try importing OpenAI
 try:
-    from openai import OpenAI
+    from openai import OpenAI  # noqa: F401
 
     HAS_OPENAI = True
 except ImportError:
@@ -373,7 +373,7 @@ def create_infographic_tool() -> ToolRegistry:
             try:
                 risk_score = float(risk_score)
                 risk_score = max(1, min(10, risk_score))
-            except:
+            except (ValueError, TypeError):
                 risk_score = 5.0
 
             # Parse highlights
@@ -398,7 +398,7 @@ def create_infographic_tool() -> ToolRegistry:
             # Color scheme
             DARK_BLUE = "#1a365d"
             GOLD = "#d4af37"
-            LIGHT_GRAY = "#f8f9fa"
+            _LIGHT_GRAY = "#f8f9fa"  # noqa: F841
             MEDIUM_GRAY = "#6c757d"
             WHITE = "#ffffff"
             GREEN = "#198754"
@@ -893,7 +893,7 @@ def create_report_tool() -> ToolRegistry:
             list_type = None  # 'ul' or 'ol'
 
             for line in lines:
-                original_line = line
+                _original_line = line  # noqa: F841
                 stripped = line.strip()
 
                 # 1. Handle Headers
@@ -1013,7 +1013,7 @@ def create_report_tool() -> ToolRegistry:
                     except json.JSONDecodeError:
                         try:
                             sections = ast.literal_eval(sections)
-                        except:
+                        except (ValueError, SyntaxError):
                             sections = {}
 
                 if isinstance(sections, dict):

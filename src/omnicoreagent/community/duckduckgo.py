@@ -1,12 +1,13 @@
 from typing import Any, Dict, Optional
 from omnicoreagent.core.tools.local_tools_registry import Tool
 
+
 class DuckDuckGoSearchTool:
     """DuckDuckGo Search Tool integration."""
 
     def __init__(self, fixed_max_results: Optional[int] = None):
         try:
-            import duckduckgo_search
+            import duckduckgo_search  # noqa: F401
         except ImportError:
             raise ImportError(
                 "Could not import `duckduckgo-search` python package. "
@@ -55,12 +56,14 @@ class DuckDuckGoSearchTool:
             return {
                 "status": "success",
                 "data": results,
-                "message": "\n---\n".join(formatted_results) if formatted_results else "No results found."
+                "message": "\n---\n".join(formatted_results)
+                if formatted_results
+                else "No results found.",
             }
 
         except Exception as e:
-             return {
+            return {
                 "status": "error",
                 "data": None,
-                "message": f"Error searching DuckDuckGo: {str(e)}"
+                "message": f"Error searching DuckDuckGo: {str(e)}",
             }

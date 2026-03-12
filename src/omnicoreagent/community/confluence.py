@@ -40,7 +40,7 @@ class ConfluenceBase:
                     password=self.password,
                     cloud=True,
                 )
-            except:
+            except Exception:
                 self.confluence = None
 
 

@@ -24,7 +24,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("background_demo")
 
-from omnicoreagent import (
+from omnicoreagent import (  # noqa: E402
     BackgroundAgentManager,
     ToolRegistry,
 )

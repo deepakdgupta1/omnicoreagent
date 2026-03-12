@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any
 import time
@@ -17,9 +18,6 @@ warnings.filterwarnings(
 
 load_dotenv()
 
-
-import logging
-
 os.environ["LITELLM_LOG"] = "CRITICAL"
 
 litellm.set_verbose = False
@@ -33,9 +31,9 @@ logging.getLogger("litellm").disabled = True
 logging.getLogger("litellm.proxy").disabled = True
 
 for logger_name in ["LiteLLM", "litellm", "litellm.proxy"]:
-    logger = logging.getLogger(logger_name)
-    logger.setLevel(logging.CRITICAL)
-    logger.propagate = False
+    _litellm_logger = logging.getLogger(logger_name)
+    _litellm_logger.setLevel(logging.CRITICAL)
+    _litellm_logger.propagate = False
 
 
 def retry_with_backoff(max_retries=3, base_delay=1, max_delay=60, backoff_factor=2):

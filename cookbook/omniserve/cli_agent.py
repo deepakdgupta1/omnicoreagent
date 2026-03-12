@@ -75,7 +75,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from omnicoreagent import OmniCoreAgent, ToolRegistry
+from omnicoreagent import OmniCoreAgent, ToolRegistry  # noqa: E402
 
 
 # =============================================================================

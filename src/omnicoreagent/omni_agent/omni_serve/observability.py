@@ -25,12 +25,10 @@ if TYPE_CHECKING:
 # Check if OpenTelemetry is available
 OTEL_AVAILABLE = False
 try:
-    from opentelemetry import trace, metrics
+    from opentelemetry import trace
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-    from opentelemetry.sdk.metrics import MeterProvider
     from opentelemetry.sdk.resources import Resource, SERVICE_NAME
-    from opentelemetry.trace import Status, StatusCode
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
     OTEL_AVAILABLE = True

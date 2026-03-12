@@ -137,7 +137,7 @@ class TestLocalMemoryBackendInitialization:
         )
 
         new_dir = os.path.join(temp_dir, "new_memories")
-        backend = LocalMemoryBackend(base_dir=new_dir)
+        _backend = LocalMemoryBackend(base_dir=new_dir)
 
         assert os.path.exists(new_dir)
         assert os.path.isdir(new_dir)
@@ -158,7 +158,7 @@ class TestLocalMemoryBackendInitialization:
         )
 
         nested_dir = os.path.join(temp_dir, "level1", "level2", "level3", "memories")
-        backend = LocalMemoryBackend(base_dir=nested_dir)
+        _backend = LocalMemoryBackend(base_dir=nested_dir)
 
         assert os.path.exists(nested_dir)
 
@@ -369,7 +369,7 @@ class TestLocalMemoryBackendStrReplace:
         local_backend.create_update(
             "multi_replace.txt", "foo bar foo baz foo", mode="create"
         )
-        result = local_backend.str_replace("multi_replace.txt", "foo", "XXX")
+        _result = local_backend.str_replace("multi_replace.txt", "foo", "XXX")
 
         with open(os.path.join(temp_dir, "multi_replace.txt"), "r") as f:
             content = f.read()
@@ -407,7 +407,7 @@ class TestLocalMemoryBackendInsert:
     def test_insert_in_middle(self, local_backend, temp_dir):
         """Test inserting in the middle of a file."""
         local_backend.create_update("middle.txt", "Line 1\nLine 3", mode="create")
-        result = local_backend.insert("middle.txt", 2, "Line 2")
+        _result = local_backend.insert("middle.txt", 2, "Line 2")
 
         with open(os.path.join(temp_dir, "middle.txt"), "r") as f:
             lines = f.readlines()
@@ -416,7 +416,7 @@ class TestLocalMemoryBackendInsert:
     def test_insert_at_end(self, local_backend, temp_dir):
         """Test inserting at the end (line > file length)."""
         local_backend.create_update("end.txt", "Line 1\nLine 2", mode="create")
-        result = local_backend.insert("end.txt", 100, "Line 3")
+        _result = local_backend.insert("end.txt", 100, "Line 3")
 
         with open(os.path.join(temp_dir, "end.txt"), "r") as f:
             content = f.read()
@@ -518,7 +518,7 @@ class TestLocalMemoryBackendSecurity:
 
     def test_path_traversal_attack_absolute(self, local_backend):
         """Test that absolute paths outside base are blocked."""
-        result = local_backend.create_update("/etc/passwd", "Malicious", mode="create")
+        _result = local_backend.create_update("/etc/passwd", "Malicious", mode="create")
 
         # Should either error or resolve safely inside base dir
         assert not os.path.exists("/etc/passwd_malicious")
@@ -540,7 +540,7 @@ class TestLocalMemoryBackendSecurity:
     def test_null_byte_injection(self, local_backend):
         """Test that null byte injection is handled."""
         # This should not cause issues
-        result = local_backend.view("file.txt\x00.jpg")
+        _result = local_backend.view("file.txt\x00.jpg")
         # Should not crash, may report not found
 
 
@@ -821,7 +821,7 @@ class TestS3MemoryBackendRetryLogic:
 
         with patch("boto3.client", return_value=mock_s3_client):
             with patch("time.sleep"):  # Skip actual sleep in tests
-                backend = S3MemoryBackend(
+                _backend = S3MemoryBackend(
                     bucket_name="test-bucket",
                     aws_access_key_id="test-key",
                     aws_secret_access_key="test-secret",
@@ -934,7 +934,7 @@ class TestR2MemoryBackendOperations:
         )
         mock_r2_client.put_object.return_value = {"ETag": '"abc123"'}
 
-        result = r2_backend.create_update("test.txt", "Hello R2!", mode="create")
+        _result = r2_backend.create_update("test.txt", "Hello R2!", mode="create")
 
         mock_r2_client.put_object.assert_called_once()
 

@@ -5,10 +5,12 @@ import platform
 import re
 import subprocess
 import sys
+import traceback
 import uuid
 from collections import defaultdict, deque
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Coroutine, Optional
 from dataclasses import dataclass
 from types import SimpleNamespace
 from rich.console import Console, Group
@@ -18,7 +20,6 @@ from rich.text import Text
 from datetime import datetime, timezone
 from decouple import config as decouple_config
 import asyncio
-from typing import Callable
 from html import escape
 import ast
 import inspect
@@ -56,9 +57,6 @@ logger.addHandler(file_handler)
 
 console_handler.flush = sys.stdout.flush
 file_handler.flush = lambda: file_handler.stream.flush()
-import traceback
-from concurrent.futures import ThreadPoolExecutor
-from typing import Coroutine
 
 
 class BackgroundTaskManager:
@@ -895,7 +893,7 @@ def get_json_schema(f) -> dict:
 
         try:
             schema = TypeAdapter(annotation).json_schema()
-        except:
+        except Exception:
             schema = {"type": "string"}
 
         properties[name] = schema

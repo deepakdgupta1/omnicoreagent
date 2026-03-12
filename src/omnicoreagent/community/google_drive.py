@@ -36,7 +36,7 @@ class GoogleDriveBase:
                 self.creds = Credentials.from_authorized_user_file(
                     str(token_file), self.scopes
                 )
-            except:
+            except Exception:
                 pass
 
         if self.creds and self.creds.valid:

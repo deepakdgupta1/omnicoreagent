@@ -88,7 +88,7 @@ class DeepCodeAgentCLI:
                         content, "python", theme="monokai", line_numbers=False
                     )
                     renderable = Panel(syntax, border_style="green", expand=False)
-                except:
+                except Exception:
                     renderable = Panel(content, border_style="green", expand=False)
             else:
                 renderable = Panel(

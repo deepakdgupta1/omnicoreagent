@@ -16,8 +16,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from omnicoreagent import DeepAgent
-from omnicoreagent.core.tools.local_tools_registry import ToolRegistry
+from omnicoreagent import DeepAgent  # noqa: E402
+from omnicoreagent.core.tools.local_tools_registry import ToolRegistry  # noqa: E402
 
 
 # =============================================================================
