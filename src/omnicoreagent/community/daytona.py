@@ -1,12 +1,10 @@
-import json
 from os import getenv
 from pathlib import Path
-from textwrap import dedent
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
 from omnicoreagent.core.utils import prepare_python_code
-from omnicoreagent.core.utils import log_debug, log_error, log_info, log_warning
+from omnicoreagent.core.utils import log_debug, log_info, log_warning
 
 try:
     from daytona import (
@@ -22,7 +20,6 @@ except ImportError:
     Daytona = None
     DaytonaConfig = None
     Sandbox = None
-
 
 
 class DaytonaTools:
@@ -52,7 +49,9 @@ class DaytonaTools:
             )
         self.api_key = api_key or getenv("DAYTONA_API_KEY")
         if not self.api_key:
-            raise ValueError("DAYTONA_API_KEY not set. Please set the DAYTONA_API_KEY environment variable.")
+            raise ValueError(
+                "DAYTONA_API_KEY not set. Please set the DAYTONA_API_KEY environment variable."
+            )
 
         self.api_url = api_url or getenv("DAYTONA_API_URL")
         self.sandbox_id = sandbox_id
@@ -85,6 +84,7 @@ class DaytonaTools:
     def _disable_ssl_verification(self) -> None:
         try:
             from daytona_api_client import Configuration
+
             original_init = Configuration.__init__
 
             def patched_init(self, *args, **kwargs):
@@ -93,10 +93,13 @@ class DaytonaTools:
 
             setattr(Configuration, "__init__", patched_init)
             import urllib3
+
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             log_debug("SSL certificate verification is disabled")
         except ImportError:
-            log_warning("Could not import daytona_api_client.Configuration for SSL patching")
+            log_warning(
+                "Could not import daytona_api_client.Configuration for SSL patching"
+            )
 
     def _get_or_create_sandbox(self) -> "Sandbox":
         if self._sandbox is not None:
@@ -155,7 +158,11 @@ class DaytonaTools:
             if self.sandbox_language == CodeLanguage.PYTHON:
                 code = prepare_python_code(code)
             response = sandbox.process.code_run(code)
-            return {"status": "success", "data": response.result, "message": "Code executed"}
+            return {
+                "status": "success",
+                "data": response.result,
+                "message": "Code executed",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -168,7 +175,10 @@ class DaytonaRunShellCommand(DaytonaTools):
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "command": {"type": "string", "description": "Shell command to execute"},
+                    "command": {
+                        "type": "string",
+                        "description": "Shell command to execute",
+                    },
                     "cwd": {"type": "string", "description": "Working directory"},
                 },
                 "required": ["command"],
@@ -176,11 +186,17 @@ class DaytonaRunShellCommand(DaytonaTools):
             function=self._run_shell,
         )
 
-    async def _run_shell(self, command: str, cwd: str = "/home/daytona") -> Dict[str, Any]:
+    async def _run_shell(
+        self, command: str, cwd: str = "/home/daytona"
+    ) -> Dict[str, Any]:
         try:
             sandbox = self._get_or_create_sandbox()
             response = sandbox.process.exec(command, cwd=cwd)
-            return {"status": "success", "data": response.result, "message": "Command executed"}
+            return {
+                "status": "success",
+                "data": response.result,
+                "message": "Command executed",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -216,9 +232,17 @@ class DaytonaCreateFile(DaytonaTools):
             result = sandbox.process.exec(command)
 
             if result.exit_code != 0:
-                return {"status": "error", "data": None, "message": f"Failed: {result.result}"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": f"Failed: {result.result}",
+                }
 
-            return {"status": "success", "data": path_str, "message": f"File created: {path_str}"}
+            return {
+                "status": "success",
+                "data": path_str,
+                "message": f"File created: {path_str}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -243,8 +267,16 @@ class DaytonaReadFile(DaytonaTools):
             sandbox = self._get_or_create_sandbox()
             result = sandbox.process.exec(f"cat '{file_path}'")
             if result.exit_code != 0:
-                return {"status": "error", "data": None, "message": f"Error: {result.result}"}
-            return {"status": "success", "data": result.result, "message": "File read successfully"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": f"Error: {result.result}",
+                }
+            return {
+                "status": "success",
+                "data": result.result,
+                "message": "File read successfully",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -268,8 +300,16 @@ class DaytonaListFiles(DaytonaTools):
             sandbox = self._get_or_create_sandbox()
             result = sandbox.process.exec(f"ls -la '{directory}'")
             if result.exit_code != 0:
-                return {"status": "error", "data": None, "message": f"Error: {result.result}"}
-            return {"status": "success", "data": result.result, "message": f"Contents of {directory}"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": f"Error: {result.result}",
+                }
+            return {
+                "status": "success",
+                "data": result.result,
+                "message": f"Contents of {directory}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -294,7 +334,15 @@ class DaytonaDeleteFile(DaytonaTools):
             sandbox = self._get_or_create_sandbox()
             result = sandbox.process.exec(f"rm -rf '{file_path}'")
             if result.exit_code != 0:
-                return {"status": "error", "data": None, "message": f"Failed: {result.result}"}
-            return {"status": "success", "data": file_path, "message": f"Deleted: {file_path}"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": f"Failed: {result.result}",
+                }
+            return {
+                "status": "success",
+                "data": file_path,
+                "message": f"Deleted: {file_path}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

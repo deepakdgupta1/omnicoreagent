@@ -1,5 +1,3 @@
-import json
-from os import getenv
 from typing import Any, Dict, List, Optional
 from xml.etree import ElementTree
 
@@ -13,7 +11,12 @@ from omnicoreagent.core.utils import log_debug
 
 
 class PubmedTools:
-    def __init__(self, email: str = "your_email@example.com", max_results: int = 10, results_expanded: bool = False):
+    def __init__(
+        self,
+        email: str = "your_email@example.com",
+        max_results: int = 10,
+        results_expanded: bool = False,
+    ):
         if httpx is None:
             raise ImportError(
                 "Could not import `httpx` python package. "
@@ -40,7 +43,13 @@ class PubmedTools:
 
     def _fetch_ids(self, query: str, max_results: int) -> List[str]:
         url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
-        params = {"db": "pubmed", "term": query, "retmax": max_results, "email": self.email, "retmode": "json"}
+        params = {
+            "db": "pubmed",
+            "term": query,
+            "retmax": max_results,
+            "email": self.email,
+            "retmode": "json",
+        }
         resp = httpx.get(url, params=params)
         data = resp.json()
         return data.get("esearchresult", {}).get("idlist", [])
@@ -86,7 +95,9 @@ class PubmedTools:
 
         return result
 
-    async def _search_pubmed(self, query: str, max_results: Optional[int] = None) -> Dict[str, Any]:
+    async def _search_pubmed(
+        self, query: str, max_results: Optional[int] = None
+    ) -> Dict[str, Any]:
         try:
             n = max_results or self.max_results
             log_debug(f"Searching PubMed: {query}")
@@ -101,6 +112,10 @@ class PubmedTools:
                 if parsed:
                     articles.append(parsed)
 
-            return {"status": "success", "data": articles, "message": f"Found {len(articles)} articles"}
+            return {
+                "status": "success",
+                "data": articles,
+                "message": f"Found {len(articles)} articles",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

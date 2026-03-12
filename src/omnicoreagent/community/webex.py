@@ -1,4 +1,3 @@
-import json
 from os import getenv
 from typing import Any, Dict, Optional
 
@@ -22,7 +21,9 @@ class WebexTools:
             )
         access_token = access_token or getenv("WEBEX_ACCESS_TOKEN")
         if access_token is None:
-            raise ValueError("Webex access token is not set. Set WEBEX_ACCESS_TOKEN environment variable.")
+            raise ValueError(
+                "Webex access token is not set. Set WEBEX_ACCESS_TOKEN environment variable."
+            )
         self.client = WebexAPI(access_token=access_token)
 
     def get_tool(self) -> Tool:
@@ -43,7 +44,11 @@ class WebexTools:
     async def _send_message(self, room_id: str, text: str) -> Dict[str, Any]:
         try:
             response = self.client.messages.create(roomId=room_id, text=text)
-            return {"status": "success", "data": response.json_data, "message": "Message sent"}
+            return {
+                "status": "success",
+                "data": response.json_data,
+                "message": "Message sent",
+            }
         except ApiError as e:
             logger.error(f"Error sending message: {e} in room: {room_id}")
             return {"status": "error", "data": None, "message": str(e)}
@@ -65,7 +70,11 @@ class WebexListRooms(WebexTools):
                 {"id": room.id, "title": room.title, "type": room.type}
                 for room in response
             ]
-            return {"status": "success", "data": rooms, "message": f"Found {len(rooms)} rooms"}
+            return {
+                "status": "success",
+                "data": rooms,
+                "message": f"Found {len(rooms)} rooms",
+            }
         except ApiError as e:
             logger.error(f"Error listing rooms: {e}")
             return {"status": "error", "data": None, "message": str(e)}

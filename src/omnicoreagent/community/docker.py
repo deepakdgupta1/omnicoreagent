@@ -1,12 +1,11 @@
-import json
-import os
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, Optional
 from omnicoreagent.core.tools.local_tools_registry import Tool
 
 try:
     import docker
 except ImportError:
     docker = None
+
 
 class DockerBase:
     def __init__(self):
@@ -20,7 +19,8 @@ class DockerBase:
         try:
             return docker.from_env()
         except Exception as e:
-             raise ValueError(f"Docker client error: {e}")
+            raise ValueError(f"Docker client error: {e}")
+
 
 class DockerListContainers(DockerBase):
     def get_tool(self) -> Tool:
@@ -40,14 +40,23 @@ class DockerListContainers(DockerBase):
         try:
             client = self._get_client()
             containers = client.containers.list(all=all)
-            data = [{"id": c.id[:12], "name": c.name, "status": c.status, "image": str(c.image)} for c in containers]
+            data = [
+                {
+                    "id": c.id[:12],
+                    "name": c.name,
+                    "status": c.status,
+                    "image": str(c.image),
+                }
+                for c in containers
+            ]
             return {
                 "status": "success",
                 "data": data,
-                "message": f"Found {len(data)} containers."
+                "message": f"Found {len(data)} containers.",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class DockerRunContainer(DockerBase):
     def get_tool(self) -> Tool:
@@ -72,10 +81,11 @@ class DockerRunContainer(DockerBase):
             return {
                 "status": "success",
                 "data": {"id": container.id},
-                "message": f"Container started: {container.id[:12]}"
+                "message": f"Container started: {container.id[:12]}",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 # Add more classes for other Docker functions as needed (ListImages, etc.)
 # For brevity in this batch, implemented core functionality.

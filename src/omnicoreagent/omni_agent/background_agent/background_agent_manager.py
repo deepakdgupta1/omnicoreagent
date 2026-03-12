@@ -2,8 +2,6 @@
 Background Agent Manager for orchestrating multiple background agents.
 """
 
-import asyncio
-
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
@@ -17,7 +15,6 @@ from omnicoreagent.omni_agent.background_agent.scheduler_backend import (
 from omnicoreagent.core.memory_store.memory_router import MemoryRouter
 from omnicoreagent.core.events.event_router import EventRouter
 from omnicoreagent.core.utils import logger
-from omnicoreagent.omni_agent.background_agent.task_registry import TaskConfig
 
 
 class BackgroundAgentManager:

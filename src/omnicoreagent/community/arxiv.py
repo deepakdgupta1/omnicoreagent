@@ -1,6 +1,5 @@
-import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from omnicoreagent.core.tools.local_tools_registry import Tool
 
 try:
@@ -8,14 +7,18 @@ try:
 except ImportError:
     arxiv = None
 
+
 class ArxivTool:
     """Arxiv Tool integration."""
+
     def __init__(
         self,
         download_dir: Optional[Path] = None,
     ):
-        self.download_dir: Path = download_dir or Path(__file__).parent.joinpath("arxiv_pdfs")
-        
+        self.download_dir: Path = download_dir or Path(__file__).parent.joinpath(
+            "arxiv_pdfs"
+        )
+
     def get_tool(self) -> Tool:
         return Tool(
             name="arxiv_search",
@@ -40,15 +43,15 @@ class ArxivTool:
 
     async def _search_arxiv(self, query: str, num_articles: int = 10) -> Dict[str, Any]:
         """Search arXiv and return articles."""
+
     async def _search_arxiv(self, query: str, num_articles: int = 10) -> Dict[str, Any]:
         """Search arXiv and return articles."""
         if arxiv is None:
-             return {
+            return {
                 "status": "error",
                 "data": None,
-                "message": "`arxiv` not installed. Please install using `pip install arxiv`"
+                "message": "`arxiv` not installed. Please install using `pip install arxiv`",
             }
-
 
         client = arxiv.Client()
         formatted_results = []
@@ -61,7 +64,7 @@ class ArxivTool:
                 sort_by=arxiv.SortCriterion.Relevance,
                 sort_order=arxiv.SortOrder.Descending,
             )
-            
+
             # Arxiv client is synchronous, so we run it directly (or could wrap in executor if blocking)
             # For simplicity in this tool refactor, we keep it sync within async wrapper
             for result in client.results(search):
@@ -70,7 +73,9 @@ class ArxivTool:
                     "id": result.get_short_id(),
                     "entry_id": result.entry_id,
                     "authors": [author.name for author in result.authors],
-                    "published": result.published.isoformat() if result.published else None,
+                    "published": result.published.isoformat()
+                    if result.published
+                    else None,
                     "pdf_url": result.pdf_url,
                     "summary": result.summary,
                 }
@@ -82,12 +87,14 @@ class ArxivTool:
             return {
                 "status": "success",
                 "data": raw_results,
-                "message": "\n---\n".join(formatted_results) if formatted_results else "No articles found."
+                "message": "\n---\n".join(formatted_results)
+                if formatted_results
+                else "No articles found.",
             }
 
         except Exception as e:
             return {
                 "status": "error",
                 "data": None,
-                "message": f"Error searching arXiv: {str(e)}"
+                "message": f"Error searching arXiv: {str(e)}",
             }

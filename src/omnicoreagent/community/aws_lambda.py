@@ -1,11 +1,11 @@
-import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from omnicoreagent.core.tools.local_tools_registry import Tool
 
 try:
     import boto3
 except ImportError:
     boto3 = None
+
 
 class AWSLambdaBase:
     def __init__(self, region_name: str = "us-east-1"):
@@ -15,12 +15,13 @@ class AWSLambdaBase:
                 "Please install it using `pip install boto3`."
             )
         self.region_name = region_name
-    
+
     def _get_client(self):
         try:
-             return boto3.client("lambda", region_name=self.region_name)
+            return boto3.client("lambda", region_name=self.region_name)
         except Exception as e:
-             raise ValueError(f"Failed to create lambda client: {e}")
+            raise ValueError(f"Failed to create lambda client: {e}")
+
 
 class AWSLambdaListFunctions(AWSLambdaBase):
     def get_tool(self) -> Tool:
@@ -42,14 +43,15 @@ class AWSLambdaListFunctions(AWSLambdaBase):
             return {
                 "status": "success",
                 "data": functions,
-                "message": f"Functions: {', '.join(functions)}"
+                "message": f"Functions: {', '.join(functions)}",
             }
         except Exception as e:
             return {
                 "status": "error",
                 "data": None,
-                "message": f"Error listing functions: {str(e)}"
+                "message": f"Error listing functions: {str(e)}",
             }
+
 
 class AWSLambdaInvoke(AWSLambdaBase):
     def get_tool(self) -> Tool:
@@ -71,15 +73,18 @@ class AWSLambdaInvoke(AWSLambdaBase):
         try:
             client = self._get_client()
             response = client.invoke(FunctionName=function_name, Payload=payload)
-            payload_resp = response['Payload'].read().decode('utf-8')
+            payload_resp = response["Payload"].read().decode("utf-8")
             return {
                 "status": "success",
-                "data": {"status_code": response['StatusCode'], "payload": payload_resp},
-                "message": f"Invoked {function_name}"
+                "data": {
+                    "status_code": response["StatusCode"],
+                    "payload": payload_resp,
+                },
+                "message": f"Invoked {function_name}",
             }
         except Exception as e:
             return {
                 "status": "error",
                 "data": None,
-                "message": f"Error invoking function: {str(e)}"
+                "message": f"Error invoking function: {str(e)}",
             }

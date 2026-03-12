@@ -1,19 +1,18 @@
 from collections import defaultdict
 import asyncio
 from typing import AsyncIterator, Set
-from uuid import uuid4
 from omnicoreagent.core.events.base import BaseEventStore, Event
 
 
 class InMemoryEventStore(BaseEventStore):
     """
     In-memory event store with pub/sub streaming.
-    
+
     Key design: Each stream() call creates a NEW subscriber queue.
     Events are only delivered to subscribers that were listening WHEN the event was published.
     This prevents old events from being replayed to new requests.
     """
-    
+
     def __init__(self):
         self.logs: dict[str, list[Event]] = defaultdict(list)
         # Map session_id -> set of subscriber queues
@@ -23,7 +22,7 @@ class InMemoryEventStore(BaseEventStore):
     async def append(self, session_id: str, event: Event) -> None:
         """Store event and broadcast to all active subscribers."""
         self.logs[session_id].append(event)
-        
+
         # Fan-out to all active subscribers for this session
         async with self._lock:
             dead_queues = set()
@@ -42,17 +41,17 @@ class InMemoryEventStore(BaseEventStore):
     async def stream(self, session_id: str) -> AsyncIterator[Event]:
         """
         Stream events for a session.
-        
+
         Creates a NEW queue for THIS subscriber - only receives events
         published AFTER this call. Does NOT replay historical events.
         """
         # Create a fresh queue for this subscriber
         queue: asyncio.Queue = asyncio.Queue()
-        
+
         # Register subscriber
         async with self._lock:
             self._subscribers[session_id].add(queue)
-        
+
         try:
             while True:
                 event = await queue.get()

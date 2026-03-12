@@ -1,25 +1,27 @@
-import json
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import logger
 
 try:
     from scrapegraph_py import Client
 except ImportError:
     Client = None
 
+
 class ScrapeGraphBase:
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or getenv("SGAI_API_KEY")
         self.client = None
         if Client is None:
-             raise ImportError("scrapegraph-py not installed. Please install it using `pip install scrapegraph-py`.")
+            raise ImportError(
+                "scrapegraph-py not installed. Please install it using `pip install scrapegraph-py`."
+            )
         elif self.api_key:
             try:
                 self.client = Client(api_key=self.api_key)
             except Exception:
                 pass
+
 
 class ScrapeGraphSmartScraper(ScrapeGraphBase):
     def get_tool(self) -> Tool:
@@ -39,17 +41,22 @@ class ScrapeGraphSmartScraper(ScrapeGraphBase):
 
     async def _smart_scrape(self, url: str, prompt: str) -> Dict[str, Any]:
         if not self.client:
-             return {"status": "error", "data": None, "message": "ScrapeGraph API key not set"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "ScrapeGraph API key not set",
+            }
 
         try:
             response = self.client.smartscraper(website_url=url, user_prompt=prompt)
             return {
                 "status": "success",
                 "data": response.get("result"),
-                "message": "Smart scrap successful"
+                "message": "Smart scrap successful",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class ScrapeGraphMarkdownify(ScrapeGraphBase):
     def get_tool(self) -> Tool:
@@ -68,17 +75,22 @@ class ScrapeGraphMarkdownify(ScrapeGraphBase):
 
     async def _markdownify(self, url: str) -> Dict[str, Any]:
         if not self.client:
-             return {"status": "error", "data": None, "message": "ScrapeGraph API key not set"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "ScrapeGraph API key not set",
+            }
 
         try:
             response = self.client.markdownify(website_url=url)
             return {
                 "status": "success",
                 "data": response.get("result"),
-                "message": "Markdown conversion successful"
+                "message": "Markdown conversion successful",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class ScrapeGraphSearch(ScrapeGraphBase):
     def get_tool(self) -> Tool:
@@ -97,14 +109,18 @@ class ScrapeGraphSearch(ScrapeGraphBase):
 
     async def _search(self, prompt: str) -> Dict[str, Any]:
         if not self.client:
-             return {"status": "error", "data": None, "message": "ScrapeGraph API key not set"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "ScrapeGraph API key not set",
+            }
 
         try:
             response = self.client.searchscraper(user_prompt=prompt)
             return {
                 "status": "success",
                 "data": response.get("result"),
-                "message": "Search successful"
+                "message": "Search successful",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

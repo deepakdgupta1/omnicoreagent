@@ -7,7 +7,6 @@ from omnicoreagent.core.summarizer.tokenizer import (
     count_tokens,
     count_message_tokens,
     get_encoding,
-    DEFAULT_SUMMARY_RATIO,
 )
 from omnicoreagent.core.summarizer.summarizer_types import (
     SummaryConfig,

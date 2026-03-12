@@ -13,10 +13,9 @@ Inspired by:
 import json
 import os
 import hashlib
-import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 
 from omnicoreagent.core.summarizer.tokenizer import count_tokens

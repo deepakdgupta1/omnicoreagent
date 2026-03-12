@@ -1,7 +1,6 @@
 from devops_copilot_agent import DevOpsCopilotRunner, log, metrics, health, CONFIG
 import sys
 import signal
-import sys
 import json
 import asyncio
 
@@ -23,12 +22,12 @@ except ImportError:
 # 4. ASCII & Welcome
 # --------------------------------------------------------------
 ASCII_ART = r"""
-   ___                   _   ____                       ____            _ _       _   
-  / _ \ _ __ ___  _ __ (_) |  _ \  _____   _____ _ __ / ___|___  _ __ (_) | ___ | |_ 
+   ___                   _   ____                       ____            _ _       _
+  / _ \ _ __ ___  _ __ (_) |  _ \  _____   _____ _ __ / ___|___  _ __ (_) | ___ | |_
  | | | | '_ ` _ \| '_ \| | | | | |/ _ \ \ / / _ \ '_ \| |   / _ \| '_ \| | |/ _ \| __|
- | |_| | | | | | | | | | | | |_| |  __/\ V / (_) | |_) | |__| (_) | |_) | | | (_) | |_ 
+ | |_| | | | | | | | | | | | |_| |  __/\ V / (_) | |_) | |__| (_) | |_) | | | (_) | |_
   \___/|_| |_| |_|_| |_|_| |____/ \___| \_/ \___/| .__/ \____\___/| .__/|_|_|\___/ \__|
-                                                  |_|              |_|                
+                                                  |_|              |_|
         Secure • Intelligent • DevOps-Powered Assistant
                     Powered by OmniCoreAgent Framework
 """
@@ -37,15 +36,15 @@ WELCOME_MESSAGE = f"""
 # Welcome to **{CONFIG.agent.name}**
 A secure, AI-powered assistant for DevOps tasks, built for production-grade workflows.
 
-**Model**: `{CONFIG.model.provider}/{CONFIG.model.model}`  
-**Storage**: `{CONFIG.storage.memory_store_type}`  
+**Model**: `{CONFIG.model.provider}/{CONFIG.model.model}`
+**Storage**: `{CONFIG.storage.memory_store_type}`
 **Timeout**: `{CONFIG.devops.timeout_seconds}s` | **Max Output**: `{CONFIG.devops.max_output_chars}`
 
 **🤖 Framework**: Built on [OmniCoreAgent](https://github.com/Abiorh001/omnicoreagent) - A robust agent framework for production systems
 
-✅ **Supported Commands**: `ls`, `grep`, `docker ps`, `kubectl get`, `journalctl`, and more  
-❌ **Blocked Operations**: `rm`, `sudo`, `docker run`, `kubectl apply`, etc.  
-💻 **Capabilities**: File operations, system monitoring, container management, Kubernetes, log analysis, configuration auditing, and workspace reporting  
+✅ **Supported Commands**: `ls`, `grep`, `docker ps`, `kubectl get`, `journalctl`, and more
+❌ **Blocked Operations**: `rm`, `sudo`, `docker run`, `kubectl apply`, etc.
+💻 **Capabilities**: File operations, system monitoring, container management, Kubernetes, log analysis, configuration auditing, and workspace reporting
 📟 **Commands**: `/help`, `/history`, `/clear`, `/tools`, `/events`, `/store_info`, `/switch_store`, `/metrics`, `/health`, `/audit`, `/exit`
 
 ### Example Queries
@@ -216,7 +215,7 @@ class DevopsCopilotCli:
 
                 ---
 
-                
+
                 Observability
 
                 Logs: All background tasks are logged

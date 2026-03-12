@@ -1,9 +1,9 @@
 import json
 from os import getenv
-from typing import Any, Dict, List, Optional, Union
+from typing import Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug, log_info, logger
+from omnicoreagent.core.utils import logger
 
 try:
     import praw
@@ -26,7 +26,7 @@ class RedditBase:
         self.username = username or getenv("REDDIT_USERNAME")
         self.password = password or getenv("REDDIT_PASSWORD")
         self.reddit = None
-        
+
         if praw is None:
             raise ImportError(
                 "Could not import `praw` python package. "
@@ -36,7 +36,7 @@ class RedditBase:
     def _get_reddit(self):
         if self.reddit:
             return self.reddit
-        
+
         if not self.client_id or not self.client_secret:
             return None
 
@@ -78,7 +78,8 @@ class RedditGetUser(RedditBase):
 
     def _get_user_info(self, username: str) -> str:
         reddit = self._get_reddit()
-        if not reddit: return "Reddit credentials missing"
+        if not reddit:
+            return "Reddit credentials missing"
 
         try:
             user = reddit.redditor(username)
@@ -111,7 +112,8 @@ class RedditGetSubreddit(RedditBase):
 
     def _get_subreddit_info(self, subreddit: str) -> str:
         reddit = self._get_reddit()
-        if not reddit: return "Reddit credentials missing"
+        if not reddit:
+            return "Reddit credentials missing"
 
         try:
             sub = reddit.subreddit(subreddit)
@@ -136,7 +138,11 @@ class RedditGetPosts(RedditBase):
                 "type": "object",
                 "properties": {
                     "subreddit": {"type": "string"},
-                    "time_filter": {"type": "string", "default": "week", "enum": ["all", "day", "hour", "month", "week", "year"]},
+                    "time_filter": {
+                        "type": "string",
+                        "default": "week",
+                        "enum": ["all", "day", "hour", "month", "week", "year"],
+                    },
                     "limit": {"type": "integer", "default": 10},
                 },
                 "required": ["subreddit"],
@@ -144,12 +150,17 @@ class RedditGetPosts(RedditBase):
             function=self._get_posts,
         )
 
-    def _get_posts(self, subreddit: str, time_filter: str = "week", limit: int = 10) -> str:
+    def _get_posts(
+        self, subreddit: str, time_filter: str = "week", limit: int = 10
+    ) -> str:
         reddit = self._get_reddit()
-        if not reddit: return "Reddit credentials missing"
+        if not reddit:
+            return "Reddit credentials missing"
 
         try:
-            posts = reddit.subreddit(subreddit).top(time_filter=time_filter, limit=limit)
+            posts = reddit.subreddit(subreddit).top(
+                time_filter=time_filter, limit=limit
+            )
             data = [
                 {
                     "id": p.id,
@@ -185,10 +196,14 @@ class RedditCreatePost(RedditBase):
             function=self._create_post,
         )
 
-    def _create_post(self, subreddit: str, title: str, content: str, is_self: bool = True) -> str:
+    def _create_post(
+        self, subreddit: str, title: str, content: str, is_self: bool = True
+    ) -> str:
         reddit = self._get_reddit()
-        if not reddit: return "Reddit credentials missing"
-        if not self.username: return "User auth required"
+        if not reddit:
+            return "Reddit credentials missing"
+        if not self.username:
+            return "User auth required"
 
         try:
             sub = reddit.subreddit(subreddit)
@@ -196,12 +211,15 @@ class RedditCreatePost(RedditBase):
                 submission = sub.submit(title=title, selftext=content)
             else:
                 submission = sub.submit(title=title, url=content)
-            
-            return json.dumps({
-                "id": submission.id,
-                "url": submission.url,
-                "permalink": submission.permalink
-            }, indent=2)
+
+            return json.dumps(
+                {
+                    "id": submission.id,
+                    "url": submission.url,
+                    "permalink": submission.permalink,
+                },
+                indent=2,
+            )
         except Exception as e:
             return f"Error: {e}"
 
@@ -214,7 +232,10 @@ class RedditReply(RedditBase):
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "thing_id": {"type": "string", "description": "ID of post or comment"},
+                    "thing_id": {
+                        "type": "string",
+                        "description": "ID of post or comment",
+                    },
                     "content": {"type": "string"},
                 },
                 "required": ["thing_id", "content"],
@@ -224,8 +245,10 @@ class RedditReply(RedditBase):
 
     def _reply(self, thing_id: str, content: str) -> str:
         reddit = self._get_reddit()
-        if not reddit: return "Reddit credentials missing"
-        if not self.username: return "User auth required"
+        if not reddit:
+            return "Reddit credentials missing"
+        if not self.username:
+            return "User auth required"
 
         try:
             # Determine if it's a submission or comment based on prefix if available, otherwise try both
@@ -233,17 +256,16 @@ class RedditReply(RedditBase):
             try:
                 submission = reddit.submission(id=thing_id)
                 # Accessing title to force fetch
-                _ = submission.title 
+                _ = submission.title
                 reply = submission.reply(body=content)
             except:
                 comment = reddit.comment(id=thing_id)
                 reply = comment.reply(body=content)
-            
-            return json.dumps({
-                "id": reply.id,
-                "permalink": reply.permalink,
-                "body": reply.body
-            }, indent=2)
+
+            return json.dumps(
+                {"id": reply.id, "permalink": reply.permalink, "body": reply.body},
+                indent=2,
+            )
 
         except Exception as e:
             return f"Error: {e}"

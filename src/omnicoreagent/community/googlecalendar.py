@@ -1,11 +1,7 @@
 import datetime
-import json
-import uuid
-from os import getenv
 from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import logger
 
 try:
     from google.auth.transport.requests import Request
@@ -21,9 +17,10 @@ except ImportError:
     build = None
     HttpError = None
 
+
 class GoogleBase:
     DEFAULT_SCOPES = []
-    
+
     def __init__(self, scopes: Optional[List[str]] = None):
         if build is None:
             raise ImportError(
@@ -35,7 +32,7 @@ class GoogleBase:
         self.service = None
         self.token_path = "token.json"
         self.credentials_path = "credentials.json"
-    
+
     def _auth(self, service_name: str, version: str) -> None:
         if self.service:
             return
@@ -45,7 +42,9 @@ class GoogleBase:
 
         if token_file.exists():
             try:
-                self.creds = Credentials.from_authorized_user_file(str(token_file), self.scopes)
+                self.creds = Credentials.from_authorized_user_file(
+                    str(token_file), self.scopes
+                )
             except Exception:
                 pass
 
@@ -57,18 +56,19 @@ class GoogleBase:
                     self.creds = None
 
             if not self.creds:
-                 # In a real server environment, we might rely on env vars or service accounts
-                 # For local dev/desktop, we use the flow. 
-                 # Since this is running in an agent, interactive auth is hard.
-                 # We assume tokens exist or env vars are set for service account (omitted here for brevity matching original)
-                 pass
-        
+                # In a real server environment, we might rely on env vars or service accounts
+                # For local dev/desktop, we use the flow.
+                # Since this is running in an agent, interactive auth is hard.
+                # We assume tokens exist or env vars are set for service account (omitted here for brevity matching original)
+                pass
+
         if self.creds:
-             self.service = build(service_name, version, credentials=self.creds)
+            self.service = build(service_name, version, credentials=self.creds)
+
 
 class GoogleCalendarBase(GoogleBase):
     DEFAULT_SCOPES = ["https://www.googleapis.com/auth/calendar"]
-    
+
     def __init__(self):
         super().__init__()
         self.calendar_id = "primary"
@@ -76,7 +76,10 @@ class GoogleCalendarBase(GoogleBase):
     def _ensure_service(self):
         self._auth("calendar", "v3")
         if not self.service:
-            raise ValueError("Google Calendar service could not be initialized (missing valid credentials).")
+            raise ValueError(
+                "Google Calendar service could not be initialized (missing valid credentials)."
+            )
+
 
 class GoogleCalendarListEvents(GoogleCalendarBase):
     def get_tool(self) -> Tool:
@@ -93,29 +96,36 @@ class GoogleCalendarListEvents(GoogleCalendarBase):
             function=self._list_events,
         )
 
-    async def _list_events(self, limit: int = 10, start_date: Optional[str] = None) -> Dict[str, Any]:
+    async def _list_events(
+        self, limit: int = 10, start_date: Optional[str] = None
+    ) -> Dict[str, Any]:
         try:
             self._ensure_service()
             if not start_date:
                 start_date = datetime.datetime.now(datetime.timezone.utc).isoformat()
-            
+
             service = cast(Resource, self.service)
-            events_result = service.events().list(
-                calendarId=self.calendar_id,
-                timeMin=start_date,
-                maxResults=limit,
-                singleEvents=True,
-                orderBy="startTime",
-            ).execute()
-            
+            events_result = (
+                service.events()
+                .list(
+                    calendarId=self.calendar_id,
+                    timeMin=start_date,
+                    maxResults=limit,
+                    singleEvents=True,
+                    orderBy="startTime",
+                )
+                .execute()
+            )
+
             events = events_result.get("items", [])
             return {
                 "status": "success",
                 "data": events,
-                "message": f"Found {len(events)} events"
+                "message": f"Found {len(events)} events",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class GoogleCalendarCreateEvent(GoogleCalendarBase):
     def get_tool(self) -> Tool:
@@ -137,7 +147,15 @@ class GoogleCalendarCreateEvent(GoogleCalendarBase):
             function=self._create_event,
         )
 
-    async def _create_event(self, summary: str, start_time: str, end_time: str, description: Optional[str] = None, location: Optional[str] = None, attendees: Optional[List[str]] = None) -> Dict[str, Any]:
+    async def _create_event(
+        self,
+        summary: str,
+        start_time: str,
+        end_time: str,
+        description: Optional[str] = None,
+        location: Optional[str] = None,
+        attendees: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         try:
             self._ensure_service()
             event_body = {
@@ -151,12 +169,16 @@ class GoogleCalendarCreateEvent(GoogleCalendarBase):
                 event_body["attendees"] = [{"email": e} for e in attendees]
 
             service = cast(Resource, self.service)
-            event = service.events().insert(calendarId=self.calendar_id, body=event_body).execute()
-            
+            event = (
+                service.events()
+                .insert(calendarId=self.calendar_id, body=event_body)
+                .execute()
+            )
+
             return {
                 "status": "success",
                 "data": event,
-                "message": f"Created event {event.get('htmlLink')}"
+                "message": f"Created event {event.get('htmlLink')}",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

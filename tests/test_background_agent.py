@@ -1,9 +1,7 @@
 import pytest
 import asyncio
-from unittest.mock import MagicMock, AsyncMock, patch
-from datetime import datetime, timezone
-from apscheduler.triggers.interval import IntervalTrigger
-from apscheduler.triggers.cron import CronTrigger
+from unittest.mock import AsyncMock, patch
+from datetime import timezone
 
 from omnicoreagent.omni_agent.background_agent.task_registry import TaskRegistry
 from omnicoreagent.omni_agent.background_agent.scheduler_backend import (

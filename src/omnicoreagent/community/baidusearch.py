@@ -1,4 +1,3 @@
-import json
 from typing import Any, Dict, List, Optional
 from omnicoreagent.core.tools.local_tools_registry import Tool
 from omnicoreagent.core.utils import log_debug
@@ -36,7 +35,7 @@ class BaiduSearchTools:
         self.proxy = proxy
         self.timeout = timeout
         self.debug = debug
-        
+
         if search is None:
             raise ImportError(
                 "Could not import `baidusearch` python package. "
@@ -75,7 +74,9 @@ class BaiduSearchTools:
             function=self._baidu_search,
         )
 
-    async def _baidu_search(self, query: str, max_results: int = 5, language: str = "zh") -> Dict[str, Any]:
+    async def _baidu_search(
+        self, query: str, max_results: int = 5, language: str = "zh"
+    ) -> Dict[str, Any]:
         """Execute Baidu search and return results"""
 
         max_results = self.fixed_max_results or max_results
@@ -91,7 +92,9 @@ class BaiduSearchTools:
 
         try:
             # baidusearch.search is synchronous
-            results = baidusearch.baidusearch.search(keyword=query, num_results=max_results)
+            results = baidusearch.baidusearch.search(
+                keyword=query, num_results=max_results
+            )
 
             res: List[Dict[str, str]] = []
             for idx, item in enumerate(results, 1):
@@ -103,15 +106,15 @@ class BaiduSearchTools:
                         "rank": str(idx),
                     }
                 )
-            
+
             return {
                 "status": "success",
                 "data": res,
-                "message": f"Found {len(res)} results"
+                "message": f"Found {len(res)} results",
             }
         except Exception as e:
             return {
                 "status": "error",
                 "data": None,
-                "message": f"Error searching Baidu: {str(e)}"
+                "message": f"Error searching Baidu: {str(e)}",
             }

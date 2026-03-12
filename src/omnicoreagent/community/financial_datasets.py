@@ -1,21 +1,23 @@
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 import httpx
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import logger
+
 
 class FinancialDatasetsBase:
     def __init__(self, api_key: Optional[str] = None):
         if httpx is None:
-             raise ImportError(
+            raise ImportError(
                 "Could not import `httpx` python package. "
                 "Please install it using `pip install httpx`."
             )
         self.api_key = api_key or getenv("FINANCIAL_DATASETS_API_KEY")
         self.base_url = "https://api.financialdatasets.ai"
 
-    async def _make_request(self, endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _make_request(
+        self, endpoint: str, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         if not self.api_key:
             return {"status": "error", "data": None, "message": "API key not set"}
 
@@ -26,9 +28,18 @@ class FinancialDatasetsBase:
             try:
                 response = await client.get(url, headers=headers, params=params)
                 response.raise_for_status()
-                return {"status": "success", "data": response.json(), "message": "Request successful"}
+                return {
+                    "status": "success",
+                    "data": response.json(),
+                    "message": "Request successful",
+                }
             except Exception as e:
-                return {"status": "error", "data": None, "message": f"Request failed: {str(e)}"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": f"Request failed: {str(e)}",
+                }
+
 
 class FinancialDatasetsGetIncomeStatements(FinancialDatasetsBase):
     def get_tool(self) -> Tool:
@@ -39,7 +50,11 @@ class FinancialDatasetsGetIncomeStatements(FinancialDatasetsBase):
                 "type": "object",
                 "properties": {
                     "ticker": {"type": "string"},
-                    "period": {"type": "string", "enum": ["annual", "quarterly", "ttm"], "default": "annual"},
+                    "period": {
+                        "type": "string",
+                        "enum": ["annual", "quarterly", "ttm"],
+                        "default": "annual",
+                    },
                     "limit": {"type": "integer", "default": 10},
                 },
                 "required": ["ticker"],
@@ -47,8 +62,14 @@ class FinancialDatasetsGetIncomeStatements(FinancialDatasetsBase):
             function=self._get_statements,
         )
 
-    async def _get_statements(self, ticker: str, period: str = "annual", limit: int = 10) -> Dict[str, Any]:
-        return await self._make_request("financials/income-statements", {"ticker": ticker, "period": period, "limit": limit})
+    async def _get_statements(
+        self, ticker: str, period: str = "annual", limit: int = 10
+    ) -> Dict[str, Any]:
+        return await self._make_request(
+            "financials/income-statements",
+            {"ticker": ticker, "period": period, "limit": limit},
+        )
+
 
 class FinancialDatasetsGetBalanceSheets(FinancialDatasetsBase):
     def get_tool(self) -> Tool:
@@ -67,8 +88,14 @@ class FinancialDatasetsGetBalanceSheets(FinancialDatasetsBase):
             function=self._get_sheets,
         )
 
-    async def _get_sheets(self, ticker: str, period: str = "annual", limit: int = 10) -> Dict[str, Any]:
-        return await self._make_request("financials/balance-sheets", {"ticker": ticker, "period": period, "limit": limit})
+    async def _get_sheets(
+        self, ticker: str, period: str = "annual", limit: int = 10
+    ) -> Dict[str, Any]:
+        return await self._make_request(
+            "financials/balance-sheets",
+            {"ticker": ticker, "period": period, "limit": limit},
+        )
+
 
 class FinancialDatasetsGetCashFlowStatements(FinancialDatasetsBase):
     def get_tool(self) -> Tool:
@@ -87,8 +114,14 @@ class FinancialDatasetsGetCashFlowStatements(FinancialDatasetsBase):
             function=self._get_flow,
         )
 
-    async def _get_flow(self, ticker: str, period: str = "annual", limit: int = 10) -> Dict[str, Any]:
-        return await self._make_request("financials/cash-flow-statements", {"ticker": ticker, "period": period, "limit": limit})
+    async def _get_flow(
+        self, ticker: str, period: str = "annual", limit: int = 10
+    ) -> Dict[str, Any]:
+        return await self._make_request(
+            "financials/cash-flow-statements",
+            {"ticker": ticker, "period": period, "limit": limit},
+        )
+
 
 class FinancialDatasetsGetStockPrices(FinancialDatasetsBase):
     def get_tool(self) -> Tool:
@@ -107,5 +140,9 @@ class FinancialDatasetsGetStockPrices(FinancialDatasetsBase):
             function=self._get_prices,
         )
 
-    async def _get_prices(self, ticker: str, interval: str = "1d", limit: int = 100) -> Dict[str, Any]:
-        return await self._make_request("prices", {"ticker": ticker, "interval": interval, "limit": limit})
+    async def _get_prices(
+        self, ticker: str, interval: str = "1d", limit: int = 100
+    ) -> Dict[str, Any]:
+        return await self._make_request(
+            "prices", {"ticker": ticker, "interval": interval, "limit": limit}
+        )

@@ -13,7 +13,6 @@ from omnicoreagent.core.summarizer.tokenizer import (
 )
 from omnicoreagent.core.summarizer.summarizer_types import (
     SummaryConfig,
-    SummaryRetentionPolicy,
     format_summary_content,
 )
 from omnicoreagent.core.utils import logger

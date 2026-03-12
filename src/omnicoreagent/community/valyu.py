@@ -1,15 +1,13 @@
-import json
 from os import getenv
 from typing import Any, Dict, List, Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug, log_error, log_warning
+from omnicoreagent.core.utils import log_error
 
 try:
     from valyu import Valyu
 except ImportError:
     Valyu = None
-
 
 
 class ValyuTools:
@@ -29,10 +27,12 @@ class ValyuTools:
         self.api_key = api_key or getenv("VALYU_API_KEY")
         if not self.api_key:
             raise ValueError("VALYU_API_KEY not set.")
-        
+
         if Valyu is None:
-            raise ImportError("`valyu` not installed. Please install using `pip install valyu`")
-            
+            raise ImportError(
+                "`valyu` not installed. Please install using `pip install valyu`"
+            )
+
         self.valyu = Valyu(api_key=self.api_key)
         self.text_length = text_length
         self.max_results = max_results
@@ -59,7 +59,7 @@ class ValyuTools:
             if hasattr(r, "content") and r.content:
                 content = r.content
                 if self.text_length and len(content) > self.text_length:
-                    content = content[:self.text_length] + "..."
+                    content = content[: self.text_length] + "..."
                 d["content"] = content
             parsed.append(d)
         return parsed
@@ -77,17 +77,29 @@ class ValyuTools:
             if kwargs.get("sources") or self.sources:
                 params["included_sources"] = kwargs.get("sources") or self.sources
             if kwargs.get("content_category") or self.content_category:
-                params["category"] = kwargs.get("content_category") or self.content_category
+                params["category"] = (
+                    kwargs.get("content_category") or self.content_category
+                )
             if kwargs.get("start_date") or self.search_start_date:
-                params["start_date"] = kwargs.get("start_date") or self.search_start_date
+                params["start_date"] = (
+                    kwargs.get("start_date") or self.search_start_date
+                )
             if kwargs.get("end_date") or self.search_end_date:
                 params["end_date"] = kwargs.get("end_date") or self.search_end_date
 
             response = self.valyu.search(**params)
             if not response.success:
-                return {"status": "error", "data": None, "message": response.error or "Search failed"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": response.error or "Search failed",
+                }
             data = self._parse_results(response.results or [])
-            return {"status": "success", "data": data, "message": f"Found {len(data)} results"}
+            return {
+                "status": "success",
+                "data": data,
+                "message": f"Found {len(data)} results",
+            }
         except Exception as e:
             log_error(f"Valyu search failed: {e}")
             return {"status": "error", "data": None, "message": str(e)}
@@ -108,9 +120,25 @@ class ValyuTools:
             function=self._search_academic,
         )
 
-    async def _search_academic(self, query: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> Dict[str, Any]:
-        sources = ["valyu/valyu-arxiv", "valyu/valyu-pubmed", "wiley/wiley-finance-papers", "wiley/wiley-finance-books"]
-        return self._valyu_search(query, "proprietary", sources=sources, start_date=start_date, end_date=end_date)
+    async def _search_academic(
+        self,
+        query: str,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        sources = [
+            "valyu/valyu-arxiv",
+            "valyu/valyu-pubmed",
+            "wiley/wiley-finance-papers",
+            "wiley/wiley-finance-books",
+        ]
+        return self._valyu_search(
+            query,
+            "proprietary",
+            sources=sources,
+            start_date=start_date,
+            end_date=end_date,
+        )
 
 
 class ValyuSearchWeb(ValyuTools):
@@ -131,8 +159,20 @@ class ValyuSearchWeb(ValyuTools):
             function=self._search_web,
         )
 
-    async def _search_web(self, query: str, start_date: Optional[str] = None, end_date: Optional[str] = None, content_category: Optional[str] = None) -> Dict[str, Any]:
-        return self._valyu_search(query, "web", content_category=content_category, start_date=start_date, end_date=end_date)
+    async def _search_web(
+        self,
+        query: str,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        content_category: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        return self._valyu_search(
+            query,
+            "web",
+            content_category=content_category,
+            start_date=start_date,
+            end_date=end_date,
+        )
 
 
 class ValyuSearchPaper(ValyuTools):

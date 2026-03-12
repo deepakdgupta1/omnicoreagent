@@ -4,8 +4,6 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, field_validator, model_validator
 import json
 
-from omnicoreagent.core.summarizer.summarizer_types import SummaryConfig
-
 
 class AgentConfig(BaseModel):
     agent_name: str
@@ -146,7 +144,7 @@ class AgentConfig(BaseModel):
 
         storage_dir = v.get("storage_dir", "workspace/artifacts")
         if not isinstance(storage_dir, str) or not storage_dir:
-            raise ValueError(f"tool_offload.storage_dir must be a non-empty string")
+            raise ValueError("tool_offload.storage_dir must be a non-empty string")
 
         retention_days = v.get("retention_days")
         if retention_days is not None and retention_days < 0:

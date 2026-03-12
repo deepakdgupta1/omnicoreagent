@@ -1,10 +1,11 @@
 import json
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, Literal, Optional
 import requests
 from requests.auth import HTTPBasicAuth
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
 from omnicoreagent.core.utils import log_debug, logger
+
 
 class CustomApiTools:
     def __init__(
@@ -70,7 +71,9 @@ class CustomApiTools:
             return HTTPBasicAuth(self.username, self.password)
         return None
 
-    def _get_headers(self, additional_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+    def _get_headers(
+        self, additional_headers: Optional[Dict[str, str]] = None
+    ) -> Dict[str, str]:
         """Combine default headers with additional headers."""
         headers = self.default_headers.copy()
         if self.api_key:
@@ -120,32 +123,26 @@ class CustomApiTools:
             }
 
             if not response.ok:
-                logger.error(f"Request failed with status {response.status_code}: {response.text}")
+                logger.error(
+                    f"Request failed with status {response.status_code}: {response.text}"
+                )
                 return {
                     "status": "error",
                     "data": result,
-                    "message": f"Request failed with status {response.status_code}"
+                    "message": f"Request failed with status {response.status_code}",
                 }
 
             return {
                 "status": "success",
                 "data": result,
-                "message": "Request successful"
+                "message": "Request successful",
             }
 
         except requests.exceptions.RequestException as e:
             error_message = f"Request failed: {str(e)}"
             logger.error(error_message)
-            return {
-                "status": "error",
-                "data": None,
-                "message": error_message
-            }
+            return {"status": "error", "data": None, "message": error_message}
         except Exception as e:
             error_message = f"Unexpected error: {str(e)}"
             logger.error(error_message)
-            return {
-                "status": "error",
-                "data": None,
-                "message": error_message
-            }
+            return {"status": "error", "data": None, "message": error_message}

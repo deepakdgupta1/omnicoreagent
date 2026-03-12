@@ -1,14 +1,14 @@
 from datetime import datetime
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 import requests
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import logger
 
 try:
     import pytz
 except ImportError:
     pytz = None
+
 
 class CalComTools:
     def __init__(
@@ -27,7 +27,9 @@ class CalComTools:
         if event_type_id is not None:
             self.event_type_id = int(event_type_id)
         else:
-            self.event_type_id = int(event_type_str) if event_type_str is not None else 0
+            self.event_type_id = (
+                int(event_type_str) if event_type_str is not None else 0
+            )
         self.user_timezone = user_timezone or "America/New_York"
 
     def _convert_to_user_timezone(self, utc_time: str) -> str:
@@ -63,9 +65,12 @@ class CalComTools:
             function=self._get_available_slots,
         )
 
-    async def _get_available_slots(self, start_date: str, end_date: str) -> Dict[str, Any]:
-        if not self.api_key: return {"status": "error", "data": None, "message": "API Key missing"}
-        
+    async def _get_available_slots(
+        self, start_date: str, end_date: str
+    ) -> Dict[str, Any]:
+        if not self.api_key:
+            return {"status": "error", "data": None, "message": "API Key missing"}
+
         try:
             url = "https://api.cal.com/v2/slots/available"
             querystring = {
@@ -73,8 +78,10 @@ class CalComTools:
                 "endTime": f"{end_date}T23:59:59Z",
                 "eventTypeId": str(self.event_type_id),
             }
-            response = requests.get(url, headers=self._get_headers(), params=querystring)
-            
+            response = requests.get(
+                url, headers=self._get_headers(), params=querystring
+            )
+
             if response.status_code == 200:
                 slots = response.json()["data"]["slots"]
                 available_slots = []
@@ -82,11 +89,20 @@ class CalComTools:
                     for slot in times:
                         user_time = self._convert_to_user_timezone(slot["time"])
                         available_slots.append(user_time)
-                return {"status": "success", "data": available_slots, "message": "Slots retrieved"}
-            
-            return {"status": "error", "data": None, "message": f"Failed: {response.text}"}
+                return {
+                    "status": "success",
+                    "data": available_slots,
+                    "message": "Slots retrieved",
+                }
+
+            return {
+                "status": "error",
+                "data": None,
+                "message": f"Failed: {response.text}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class CalComCreateBooking(CalComTools):
     def get_tool(self) -> Tool:
@@ -96,7 +112,10 @@ class CalComCreateBooking(CalComTools):
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "start_time": {"type": "string", "description": "YYYY-MM-DDTHH:MM:SSZ"},
+                    "start_time": {
+                        "type": "string",
+                        "description": "YYYY-MM-DDTHH:MM:SSZ",
+                    },
                     "name": {"type": "string"},
                     "email": {"type": "string"},
                 },
@@ -105,25 +124,40 @@ class CalComCreateBooking(CalComTools):
             function=self._create_booking,
         )
 
-    async def _create_booking(self, start_time: str, name: str, email: str) -> Dict[str, Any]:
-        if not self.api_key: return {"status": "error", "data": None, "message": "API Key missing"}
+    async def _create_booking(
+        self, start_time: str, name: str, email: str
+    ) -> Dict[str, Any]:
+        if not self.api_key:
+            return {"status": "error", "data": None, "message": "API Key missing"}
         try:
             url = "https://api.cal.com/v2/bookings"
             # Format time
             dt = datetime.fromisoformat(start_time).astimezone(pytz.utc)
             fmt_time = dt.isoformat(timespec="seconds")
-            
+
             payload = {
                 "start": fmt_time,
                 "eventTypeId": self.event_type_id,
-                "attendee": {"name": name, "email": email, "timeZone": self.user_timezone},
+                "attendee": {
+                    "name": name,
+                    "email": email,
+                    "timeZone": self.user_timezone,
+                },
             }
             response = requests.post(url, json=payload, headers=self._get_headers())
-            
+
             if response.status_code == 201:
                 booking_data = response.json()["data"]
-                return {"status": "success", "data": booking_data, "message": "Booking created"}
-                
-            return {"status": "error", "data": None, "message": f"Failed: {response.text}"}
+                return {
+                    "status": "success",
+                    "data": booking_data,
+                    "message": "Booking created",
+                }
+
+            return {
+                "status": "error",
+                "data": None,
+                "message": f"Failed: {response.text}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

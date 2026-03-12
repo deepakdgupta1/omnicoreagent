@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
 from omnicoreagent.core.utils import log_debug, log_info, logger
@@ -51,19 +51,20 @@ class AirflowTools:
                 file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(contents)
             log_info(f"Saved: {file_path}")
-            
+
             return {
                 "status": "success",
                 "data": str(file_path),
-                "message": f"DAG saved to {file_path}"
+                "message": f"DAG saved to {file_path}",
             }
         except Exception as e:
             logger.error(f"Error saving to file: {e}")
             return {
                 "status": "error",
                 "data": None,
-                "message": f"Error saving to file: {e}"
+                "message": f"Error saving to file: {e}",
             }
+
 
 class AirflowReadDAG:
     def __init__(
@@ -101,16 +102,16 @@ class AirflowReadDAG:
             log_info(f"Reading file: {dag_file}")
             file_path = self.dags_dir.joinpath(dag_file)
             contents = file_path.read_text()
-            
+
             return {
                 "status": "success",
                 "data": contents,
-                "message": "DAG file read successfully"
+                "message": "DAG file read successfully",
             }
         except Exception as e:
             logger.error(f"Error reading file: {e}")
             return {
                 "status": "error",
                 "data": None,
-                "message": f"Error reading file: {e}"
+                "message": f"Error reading file: {e}",
             }

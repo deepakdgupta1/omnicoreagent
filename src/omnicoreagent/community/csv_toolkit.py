@@ -1,9 +1,8 @@
 import csv
-import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import logger
+
 
 class CsvRead:
     def get_tool(self) -> Tool:
@@ -25,23 +24,24 @@ class CsvRead:
         try:
             path = Path(file_path)
             if not path.exists():
-                 return {"status": "error", "data": None, "message": "File not found"}
-            
+                return {"status": "error", "data": None, "message": "File not found"}
+
             data = []
-            with open(path, 'r', newline='') as f:
+            with open(path, "r", newline="") as f:
                 reader = csv.DictReader(f)
                 for i, row in enumerate(reader):
                     if i >= limit:
                         break
                     data.append(row)
-            
+
             return {
                 "status": "success",
                 "data": data,
-                "message": f"Read {len(data)} rows from {file_path}"
+                "message": f"Read {len(data)} rows from {file_path}",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class CsvGetColumns:
     def get_tool(self) -> Tool:
@@ -62,16 +62,16 @@ class CsvGetColumns:
         try:
             path = Path(file_path)
             if not path.exists():
-                 return {"status": "error", "data": None, "message": "File not found"}
+                return {"status": "error", "data": None, "message": "File not found"}
 
-            with open(path, 'r', newline='') as f:
+            with open(path, "r", newline="") as f:
                 reader = csv.DictReader(f)
                 columns = reader.fieldnames
-            
+
             return {
                 "status": "success",
                 "data": columns,
-                "message": f"Columns: {columns}"
+                "message": f"Columns: {columns}",
             }
         except Exception as e:
-             return {"status": "error", "data": None, "message": str(e)}
+            return {"status": "error", "data": None, "message": str(e)}

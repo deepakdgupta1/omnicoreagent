@@ -1,4 +1,3 @@
-import os
 from typing import Any, Dict, Optional
 from omnicoreagent.core.tools.local_tools_registry import Tool
 
@@ -7,8 +6,11 @@ try:
 except ImportError:
     boto3 = None
 
+
 class AWSSETSendEmail:
-    def __init__(self, sender_email: Optional[str] = None, region_name: str = "us-east-1"):
+    def __init__(
+        self, sender_email: Optional[str] = None, region_name: str = "us-east-1"
+    ):
         if boto3 is None:
             raise ImportError(
                 "Could not import `boto3` python package. "
@@ -33,7 +35,9 @@ class AWSSETSendEmail:
             function=self._send_email,
         )
 
-    async def _send_email(self, receiver_email: str, subject: str, body: str) -> Dict[str, Any]:
+    async def _send_email(
+        self, receiver_email: str, subject: str, body: str
+    ) -> Dict[str, Any]:
         try:
             client = boto3.client("ses", region_name=self.region_name)
             response = client.send_email(
@@ -41,17 +45,17 @@ class AWSSETSendEmail:
                 Destination={"ToAddresses": [receiver_email]},
                 Message={
                     "Subject": {"Data": subject},
-                    "Body": {"Text": {"Data": body}}
-                }
+                    "Body": {"Text": {"Data": body}},
+                },
             )
             return {
                 "status": "success",
                 "data": response,
-                "message": f"Email sent. ID: {response['MessageId']}"
+                "message": f"Email sent. ID: {response['MessageId']}",
             }
         except Exception as e:
             return {
                 "status": "error",
                 "data": None,
-                "message": f"Error sending email: {str(e)}"
+                "message": f"Error sending email: {str(e)}",
             }

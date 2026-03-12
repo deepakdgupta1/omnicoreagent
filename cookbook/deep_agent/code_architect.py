@@ -30,16 +30,16 @@ You research best practices, create detailed designs, and provide implementation
     )
 
     await agent.initialize()
-    print(f"✓ Architect initialized")
+    print("✓ Architect initialized")
 
     result = await agent.run("""
     Design an authentication system for a SaaS application.
-    
+
     Requirements:
     - Email/password and social login (Google, GitHub)
     - JWT with refresh tokens
     - Role-based access control
-    
+
     Research best practices, then create a detailed plan.
     """)
 

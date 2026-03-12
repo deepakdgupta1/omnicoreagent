@@ -55,8 +55,8 @@ def create_chart_tool() -> ToolRegistry:
         Generate a professional revenue projection chart with bear/base/bull scenarios.
 
         **When to use:**
-        Use this tool when you need to visualize financial projections for an investment 
-        analysis. The chart shows three scenarios (pessimistic, expected, optimistic) to 
+        Use this tool when you need to visualize financial projections for an investment
+        analysis. The chart shows three scenarios (pessimistic, expected, optimistic) to
         help investors understand the range of possible outcomes.
 
         **What it produces:**
@@ -255,8 +255,8 @@ def create_infographic_tool() -> ToolRegistry:
         Generate a professional investment infographic (Goldman Sachs-style one-pager).
 
         **When to use:**
-        Use this tool to create a visually stunning, investor-ready summary of a company's 
-        key metrics. This is ideal for executive presentations, pitch decks, or investment 
+        Use this tool to create a visually stunning, investor-ready summary of a company's
+        key metrics. This is ideal for executive presentations, pitch decks, or investment
         committee materials. The infographic will display all metrics with 100% accuracy.
 
         **What it produces:**
@@ -359,7 +359,6 @@ def create_infographic_tool() -> ToolRegistry:
         try:
             import numpy as np
             from matplotlib.patches import FancyBboxPatch, Circle, Wedge
-            from matplotlib.collections import PatchCollection
             import matplotlib.patheffects as path_effects
 
             # Ensure clean string values
@@ -788,8 +787,8 @@ def create_report_tool() -> ToolRegistry:
         Generate a professional HTML investment report styled like McKinsey/Goldman Sachs.
 
         **When to use:**
-        Use this tool as the final step to compile all your due diligence findings into a 
-        polished, investor-ready HTML document. This tool does NOT use an LLM - it directly 
+        Use this tool as the final step to compile all your due diligence findings into a
+        polished, investor-ready HTML document. This tool does NOT use an LLM - it directly
         formats your content into a professional template. No external API calls required.
 
         **What it produces:**
@@ -1039,7 +1038,7 @@ def create_report_tool() -> ToolRegistry:
             padding: 0;
             box-sizing: border-box;
         }}
-        
+
         body {{
             font-family: 'Georgia', 'Times New Roman', serif;
             line-height: 1.7;
@@ -1049,13 +1048,13 @@ def create_report_tool() -> ToolRegistry:
             margin: 0 auto;
             padding: 40px 60px;
         }}
-        
+
         .header {{
             border-bottom: 3px solid #d4af37;
             padding-bottom: 30px;
             margin-bottom: 40px;
         }}
-        
+
         .header-meta {{
             color: #666;
             font-size: 0.9em;
@@ -1063,19 +1062,19 @@ def create_report_tool() -> ToolRegistry:
             letter-spacing: 2px;
             margin-bottom: 10px;
         }}
-        
+
         h1 {{
             color: #1a365d;
             font-size: 2.5em;
             font-weight: 700;
             margin-bottom: 10px;
         }}
-        
+
         .date {{
             color: #888;
             font-style: italic;
         }}
-        
+
         h2 {{
             color: #1a365d;
             font-size: 1.4em;
@@ -1084,58 +1083,58 @@ def create_report_tool() -> ToolRegistry:
             padding-bottom: 8px;
             border-bottom: 1px solid #e0e0e0;
         }}
-        
+
         h3 {{
             color: #2d4a6f;
             font-size: 1.1em;
             margin-top: 25px;
             margin-bottom: 10px;
         }}
-        
+
         p {{
             margin-bottom: 15px;
             text-align: justify;
         }}
-        
+
         .report-section {{
             margin-bottom: 30px;
         }}
-        
+
         .executive-summary {{
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-left: 4px solid #d4af37;
             padding: 25px 30px;
             margin: 30px 0;
         }}
-        
+
         .executive-summary h2 {{
             margin-top: 0;
             border-bottom: none;
             color: #1a365d;
         }}
-        
+
         table {{
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
         }}
-        
+
         th, td {{
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }}
-        
+
         th {{
             background: #1a365d;
             color: white;
             font-weight: 600;
         }}
-        
+
         tr:nth-child(even) {{
             background: #f8f9fa;
         }}
-        
+
         .recommendation {{
             background: #1a365d;
             color: white;
@@ -1143,13 +1142,13 @@ def create_report_tool() -> ToolRegistry:
             margin: 30px 0;
             text-align: center;
         }}
-        
+
         .recommendation h2 {{
             color: #d4af37;
             border: none;
             margin: 0 0 10px 0;
         }}
-        
+
         .footer {{
             margin-top: 50px;
             padding-top: 20px;
@@ -1158,15 +1157,15 @@ def create_report_tool() -> ToolRegistry:
             font-size: 0.85em;
             text-align: center;
         }}
-        
+
         ul, ol {{
             margin: 15px 0 15px 25px;
         }}
-        
+
         li {{
             margin-bottom: 8px;
         }}
-        
+
         @media print {{
             body {{
                 padding: 20px;
@@ -1183,11 +1182,11 @@ def create_report_tool() -> ToolRegistry:
         <h1>{company_name}</h1>
         <div class="date">{current_date}</div>
     </header>
-    
+
     <main>
         {sections_html if sections_html else f'<div class="report-section">{to_html(content)}</div>'}
     </main>
-    
+
     <footer class="footer">
         <p>This report was generated on {current_date}.</p>
         <p>Confidential - For Investment Purposes Only</p>

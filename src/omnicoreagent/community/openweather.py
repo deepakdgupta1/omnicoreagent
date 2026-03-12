@@ -1,4 +1,3 @@
-import json
 from os import getenv
 from typing import Any, Dict, Optional
 
@@ -8,7 +7,7 @@ except ImportError:
     requests = None
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_info, logger
+from omnicoreagent.core.utils import logger
 
 
 class OpenWeatherTools:
@@ -18,7 +17,9 @@ class OpenWeatherTools:
         units: str = "metric",
     ):
         if requests is None:
-            raise ImportError("`requests` not installed. Please install using `pip install requests`")
+            raise ImportError(
+                "`requests` not installed. Please install using `pip install requests`"
+            )
         self.api_key = api_key or getenv("OPENWEATHER_API_KEY")
         if not self.api_key:
             logger.error("OPENWEATHER_API_KEY not set.")
@@ -39,7 +40,11 @@ class OpenWeatherTools:
         params = {"q": location, "limit": 1, "appid": self.api_key}
         data = self._make_request(url, params)
         if data and len(data) > 0:
-            return {"lat": data[0]["lat"], "lon": data[0]["lon"], "name": data[0].get("name", location)}
+            return {
+                "lat": data[0]["lat"],
+                "lon": data[0]["lon"],
+                "name": data[0].get("name", location),
+            }
         return None
 
     def get_tool(self) -> Tool:
@@ -49,7 +54,10 @@ class OpenWeatherTools:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "location": {"type": "string", "description": "City name (e.g., 'London', 'New York')"},
+                    "location": {
+                        "type": "string",
+                        "description": "City name (e.g., 'London', 'New York')",
+                    },
                 },
                 "required": ["location"],
             },
@@ -60,14 +68,31 @@ class OpenWeatherTools:
         try:
             geo = self._geocode(location)
             if not geo:
-                return {"status": "error", "data": None, "message": f"Could not geocode '{location}'"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": f"Could not geocode '{location}'",
+                }
 
             url = f"{self.base_url}/data/2.5/weather"
-            params = {"lat": geo["lat"], "lon": geo["lon"], "appid": self.api_key, "units": self.units}
+            params = {
+                "lat": geo["lat"],
+                "lon": geo["lon"],
+                "appid": self.api_key,
+                "units": self.units,
+            }
             data = self._make_request(url, params)
             if not data:
-                return {"status": "error", "data": None, "message": "Failed to get weather data"}
-            return {"status": "success", "data": data, "message": f"Weather for {location}"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": "Failed to get weather data",
+                }
+            return {
+                "status": "success",
+                "data": data,
+                "message": f"Weather for {location}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -81,7 +106,11 @@ class OpenWeatherForecast(OpenWeatherTools):
                 "type": "object",
                 "properties": {
                     "location": {"type": "string"},
-                    "days": {"type": "integer", "default": 5, "description": "Number of days (max 5)"},
+                    "days": {
+                        "type": "integer",
+                        "default": 5,
+                        "description": "Number of days (max 5)",
+                    },
                 },
                 "required": ["location"],
             },
@@ -92,14 +121,32 @@ class OpenWeatherForecast(OpenWeatherTools):
         try:
             geo = self._geocode(location)
             if not geo:
-                return {"status": "error", "data": None, "message": f"Could not geocode '{location}'"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": f"Could not geocode '{location}'",
+                }
 
             url = f"{self.base_url}/data/2.5/forecast"
-            params = {"lat": geo["lat"], "lon": geo["lon"], "appid": self.api_key, "units": self.units, "cnt": days * 8}
+            params = {
+                "lat": geo["lat"],
+                "lon": geo["lon"],
+                "appid": self.api_key,
+                "units": self.units,
+                "cnt": days * 8,
+            }
             data = self._make_request(url, params)
             if not data:
-                return {"status": "error", "data": None, "message": "Failed to get forecast"}
-            return {"status": "success", "data": data, "message": f"Forecast for {location}"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": "Failed to get forecast",
+                }
+            return {
+                "status": "success",
+                "data": data,
+                "message": f"Forecast for {location}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -123,13 +170,25 @@ class OpenWeatherAirPollution(OpenWeatherTools):
         try:
             geo = self._geocode(location)
             if not geo:
-                return {"status": "error", "data": None, "message": f"Could not geocode '{location}'"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": f"Could not geocode '{location}'",
+                }
 
             url = f"{self.base_url}/data/2.5/air_pollution"
             params = {"lat": geo["lat"], "lon": geo["lon"], "appid": self.api_key}
             data = self._make_request(url, params)
             if not data:
-                return {"status": "error", "data": None, "message": "Failed to get air pollution data"}
-            return {"status": "success", "data": data, "message": f"Air pollution for {location}"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": "Failed to get air pollution data",
+                }
+            return {
+                "status": "success",
+                "data": data,
+                "message": f"Air pollution for {location}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

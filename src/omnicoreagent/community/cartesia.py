@@ -1,15 +1,14 @@
-import json
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 import base64
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug, log_error, log_info
 
 try:
     import cartesia
 except ImportError:
     cartesia = None
+
 
 class CartesiaTools:
     def __init__(
@@ -30,14 +29,14 @@ class CartesiaTools:
                 self.client = cartesia.Cartesia(api_key=self.api_key)
             except Exception:
                 self.client = None
-                
+
         self.model_id = model_id
         self.default_voice_id = default_voice_id
 
     def get_tool(self) -> Tool:
         return Tool(
             name="cartesia_list_voices",
-             description="List available voices from Cartesia.",
+            description="List available voices from Cartesia.",
             inputSchema={
                 "type": "object",
                 "properties": {},
@@ -46,22 +45,34 @@ class CartesiaTools:
         )
 
     async def _list_voices(self) -> Dict[str, Any]:
-        if not self.client: return {"status": "error", "data": None, "message": "Client not initialized"}
+        if not self.client:
+            return {
+                "status": "error",
+                "data": None,
+                "message": "Client not initialized",
+            }
         try:
             voices = self.client.voices.list()
             voice_objects = voices.items if voices else []
-            
+
             results = []
             for v in voice_objects:
-                if hasattr(v, 'id'):
-                    results.append({
-                        "id": v.id, 
-                        "name": getattr(v, 'name', ''), 
-                        "language": getattr(v, 'language', '')
-                    })
-            return {"status": "success", "data": results, "message": f"Found {len(results)} voices"}
+                if hasattr(v, "id"):
+                    results.append(
+                        {
+                            "id": v.id,
+                            "name": getattr(v, "name", ""),
+                            "language": getattr(v, "language", ""),
+                        }
+                    )
+            return {
+                "status": "success",
+                "data": results,
+                "message": f"Found {len(results)} voices",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class CartesiaTTS(CartesiaTools):
     def get_tool(self) -> Tool:
@@ -79,12 +90,19 @@ class CartesiaTTS(CartesiaTools):
             function=self._text_to_speech,
         )
 
-    async def _text_to_speech(self, transcript: str, voice_id: Optional[str] = None) -> Dict[str, Any]:
-        if not self.client: return {"status": "error", "data": None, "message": "Client not initialized"}
-        
+    async def _text_to_speech(
+        self, transcript: str, voice_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if not self.client:
+            return {
+                "status": "error",
+                "data": None,
+                "message": "Client not initialized",
+            }
+
         try:
             effective_voice_id = voice_id or self.default_voice_id
-            
+
             output_format = {
                 "container": "mp3",
                 "sample_rate": 44100,
@@ -98,14 +116,14 @@ class CartesiaTTS(CartesiaTools):
                 voice={"mode": "id", "id": effective_voice_id},
                 output_format=output_format,
             )
-            
+
             audio_data = b"".join(chunk for chunk in audio_iterator)
-            b64_audio = base64.b64encode(audio_data).decode('utf-8')
-            
+            b64_audio = base64.b64encode(audio_data).decode("utf-8")
+
             return {
-                "status": "success", 
-                "data": {"audio_base64_length": len(b64_audio)}, 
-                "message": "Speech generated successfully"
+                "status": "success",
+                "data": {"audio_base64_length": len(b64_audio)},
+                "message": "Speech generated successfully",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

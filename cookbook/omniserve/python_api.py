@@ -58,7 +58,6 @@ TEST THE API
 =============================================================================
 """
 
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -68,13 +67,6 @@ from omnicoreagent import (
     ToolRegistry,
     OmniServe,
     OmniServeConfig,
-    # Resilience utilities (optional - for advanced use)
-    RetryConfig,
-    RetryStrategy,
-    CircuitBreaker,
-    CircuitBreakerConfig,
-    with_retry,
-    get_metrics,
 )
 
 
@@ -89,11 +81,20 @@ tools = ToolRegistry()
 def calculate(expression: str) -> dict:
     """Evaluate a math expression like '2 + 2' or 'sqrt(16)'."""
     import math
+
     try:
-        result = eval(expression, {"__builtins__": {}}, {
-            "sqrt": math.sqrt, "sin": math.sin, "cos": math.cos,
-            "pi": math.pi, "abs": abs, "round": round,
-        })
+        result = eval(
+            expression,
+            {"__builtins__": {}},
+            {
+                "sqrt": math.sqrt,
+                "sin": math.sin,
+                "cos": math.cos,
+                "pi": math.pi,
+                "abs": abs,
+                "round": round,
+            },
+        )
         return {"expression": expression, "result": result}
     except Exception as e:
         return {"error": str(e)}
@@ -103,6 +104,7 @@ def calculate(expression: str) -> dict:
 def get_time() -> dict:
     """Get the current time."""
     from datetime import datetime
+
     now = datetime.now()
     return {
         "time": now.strftime("%H:%M:%S"),
@@ -118,7 +120,7 @@ def get_time() -> dict:
 agent = OmniCoreAgent(
     name="DemoAgent",
     system_instruction="""You are a helpful assistant with tools.
-    
+
 Available tools:
 - calculate: Evaluate math expressions
 - get_time: Get current time
@@ -132,7 +134,7 @@ Use tools when appropriate.""",
     debug=False,
     agent_config={
         "memory_tool_backend": "local"  # Use "s3" or "r2" for cloud storage
-    }
+    },
 )
 
 
@@ -144,49 +146,43 @@ config = OmniServeConfig(
     # -------------------------------------------------------------------------
     # SERVER
     # -------------------------------------------------------------------------
-    host="0.0.0.0",                # OMNISERVE_HOST
-    port=8000,                      # OMNISERVE_PORT
-    workers=1,                      # OMNISERVE_WORKERS
-    api_prefix="",                  # OMNISERVE_API_PREFIX (e.g., "/api/v1")
-
+    host="0.0.0.0",  # OMNISERVE_HOST
+    port=8000,  # OMNISERVE_PORT
+    workers=1,  # OMNISERVE_WORKERS
+    api_prefix="",  # OMNISERVE_API_PREFIX (e.g., "/api/v1")
     # -------------------------------------------------------------------------
     # DOCUMENTATION
     # -------------------------------------------------------------------------
-    enable_docs=True,               # OMNISERVE_ENABLE_DOCS - Swagger UI at /docs
-    enable_redoc=True,              # OMNISERVE_ENABLE_REDOC - ReDoc at /redoc
-
+    enable_docs=True,  # OMNISERVE_ENABLE_DOCS - Swagger UI at /docs
+    enable_redoc=True,  # OMNISERVE_ENABLE_REDOC - ReDoc at /redoc
     # -------------------------------------------------------------------------
     # CORS (Cross-Origin Resource Sharing)
     # -------------------------------------------------------------------------
-    cors_enabled=True,              # OMNISERVE_CORS_ENABLED
-    cors_origins=["*"],             # OMNISERVE_CORS_ORIGINS - comma-separated
-    cors_credentials=True,          # OMNISERVE_CORS_CREDENTIALS
-    cors_methods=["*"],             # OMNISERVE_CORS_METHODS
-    cors_headers=["*"],             # OMNISERVE_CORS_HEADERS
-
+    cors_enabled=True,  # OMNISERVE_CORS_ENABLED
+    cors_origins=["*"],  # OMNISERVE_CORS_ORIGINS - comma-separated
+    cors_credentials=True,  # OMNISERVE_CORS_CREDENTIALS
+    cors_methods=["*"],  # OMNISERVE_CORS_METHODS
+    cors_headers=["*"],  # OMNISERVE_CORS_HEADERS
     # -------------------------------------------------------------------------
     # AUTHENTICATION
     # -------------------------------------------------------------------------
-    auth_enabled=True,              # OMNISERVE_AUTH_ENABLED
-    auth_token="my-secret-token",   # OMNISERVE_AUTH_TOKEN
-
+    auth_enabled=True,  # OMNISERVE_AUTH_ENABLED
+    auth_token="my-secret-token",  # OMNISERVE_AUTH_TOKEN
     # -------------------------------------------------------------------------
     # RATE LIMITING
     # -------------------------------------------------------------------------
-    rate_limit_enabled=True,        # OMNISERVE_RATE_LIMIT_ENABLED
-    rate_limit_requests=100,        # OMNISERVE_RATE_LIMIT_REQUESTS
-    rate_limit_window=60,           # OMNISERVE_RATE_LIMIT_WINDOW (seconds)
-
+    rate_limit_enabled=True,  # OMNISERVE_RATE_LIMIT_ENABLED
+    rate_limit_requests=100,  # OMNISERVE_RATE_LIMIT_REQUESTS
+    rate_limit_window=60,  # OMNISERVE_RATE_LIMIT_WINDOW (seconds)
     # -------------------------------------------------------------------------
     # LOGGING
     # -------------------------------------------------------------------------
-    request_logging=True,           # OMNISERVE_REQUEST_LOGGING
-    log_level="INFO",               # OMNISERVE_LOG_LEVEL (DEBUG/INFO/WARNING/ERROR)
-
+    request_logging=True,  # OMNISERVE_REQUEST_LOGGING
+    log_level="INFO",  # OMNISERVE_LOG_LEVEL (DEBUG/INFO/WARNING/ERROR)
     # -------------------------------------------------------------------------
     # TIMEOUTS
     # -------------------------------------------------------------------------
-    request_timeout=300,            # OMNISERVE_REQUEST_TIMEOUT (seconds)
+    request_timeout=300,  # OMNISERVE_REQUEST_TIMEOUT (seconds)
 )
 
 
@@ -214,8 +210,10 @@ if __name__ == "__main__":
     print(f"  Prometheus:  http://localhost:{config.port}/prometheus")
     print()
     print("CONFIGURATION:")
-    print(f"  ✓ Auth:       Enabled (Bearer token)")
-    print(f"  ✓ Rate Limit: {config.rate_limit_requests} req / {config.rate_limit_window}s")
+    print("  ✓ Auth:       Enabled (Bearer token)")
+    print(
+        f"  ✓ Rate Limit: {config.rate_limit_requests} req / {config.rate_limit_window}s"
+    )
     print(f"  ✓ CORS:       {config.cors_origins}")
     print(f"  ✓ Timeout:    {config.request_timeout}s")
     print()
@@ -224,7 +222,7 @@ if __name__ == "__main__":
     print("  • get_time()")
     print()
     print("TEST:")
-    print('  curl -X POST http://localhost:8000/run/sync \\')
+    print("  curl -X POST http://localhost:8000/run/sync \\")
     print('    -H "Authorization: Bearer my-secret-token" \\')
     print('    -H "Content-Type: application/json" \\')
     print('    -d \'{"query": "What is 2+2?"}\'')

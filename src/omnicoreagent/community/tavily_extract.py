@@ -1,9 +1,10 @@
 import os
+
 try:
     import httpx
 except ImportError:
     httpx = None
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, Optional
 from omnicoreagent.core.tools.local_tools_registry import Tool
 
 
@@ -18,7 +19,9 @@ class TavilyExtract:
             api_key: Tavily API key. If not provided, it will be read from TAVILY_API_KEY environment variable.
         """
         if httpx is None:
-            raise ImportError("`httpx` not installed. Please install using `pip install httpx`")
+            raise ImportError(
+                "`httpx` not installed. Please install using `pip install httpx`"
+            )
         self.api_key = api_key or os.environ.get("TAVILY_API_KEY")
         if not self.api_key:
             raise ValueError(
@@ -55,9 +58,9 @@ class TavilyExtract:
     ) -> Dict[str, Any]:
         """Execute the extract request."""
         url = "https://api.tavily.com/extract"
-        
+
         url_list = [u.strip() for u in urls.split(",") if u.strip()]
-        
+
         payload = {
             "api_key": self.api_key,
             "urls": url_list,
@@ -66,16 +69,18 @@ class TavilyExtract:
 
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.post(url, json=payload, timeout=60.0) # Extraction might take longer
+                response = await client.post(
+                    url, json=payload, timeout=60.0
+                )  # Extraction might take longer
                 response.raise_for_status()
                 data = response.json()
-                
+
                 results = data.get("results", [])
                 formatted_results = []
                 for result in results:
                     # Handle both successful and failed extractions from Tavily side
                     if "failed_reason" in result and result["failed_reason"]:
-                         formatted_results.append(
+                        formatted_results.append(
                             f"## {result.get('url')}\n**Extraction Failed**: {result.get('failed_reason')}\n"
                         )
                     else:
@@ -86,7 +91,9 @@ class TavilyExtract:
                 return {
                     "status": "success",
                     "data": data,
-                    "message": "\n---\n".join(formatted_results) if formatted_results else "No content extracted."
+                    "message": "\n---\n".join(formatted_results)
+                    if formatted_results
+                    else "No content extracted.",
                 }
 
             except httpx.HTTPStatusError as e:
@@ -99,5 +106,5 @@ class TavilyExtract:
                 return {
                     "status": "error",
                     "data": None,
-                    "message": f"Extraction failed: {str(e)}"
+                    "message": f"Extraction failed: {str(e)}",
                 }

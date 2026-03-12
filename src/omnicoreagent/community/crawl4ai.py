@@ -1,16 +1,18 @@
-import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import logger
 
 try:
     from crawl4ai import AsyncWebCrawler
 except ImportError:
     AsyncWebCrawler = None
 
-class Crawl4AI(Tool): # Inherit from Tool or just implement get_tool? We implement get_tool standard.
+
+class Crawl4AI(
+    Tool
+):  # Inherit from Tool or just implement get_tool? We implement get_tool standard.
     # Note: Previous standard uses class with get_tool.
     pass
+
 
 class Crawl4AICrawl:
     def __init__(self):
@@ -42,7 +44,7 @@ class Crawl4AICrawl:
                 return {
                     "status": "success",
                     "data": content,
-                    "message": f"Crawled {len(content) if content else 0} chars"
+                    "message": f"Crawled {len(content) if content else 0} chars",
                 }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

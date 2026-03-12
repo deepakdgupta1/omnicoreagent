@@ -1,15 +1,13 @@
-import json
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_info, logger
+from omnicoreagent.core.utils import logger
 
 try:
     from seltz import Seltz
 except ImportError:
     Seltz = None
-
 
 
 class SeltzTools:
@@ -26,7 +24,9 @@ class SeltzTools:
         self.max_documents = max_documents
         self.client = None
         if Seltz is None:
-            raise ImportError("`seltz` not installed. Please install using `pip install seltz`") # Assuming package name
+            raise ImportError(
+                "`seltz` not installed. Please install using `pip install seltz`"
+            )  # Assuming package name
         if self.api_key:
             kwargs: Dict[str, Any] = {"api_key": self.api_key}
             if endpoint:
@@ -50,11 +50,15 @@ class SeltzTools:
             function=self._search,
         )
 
-    async def _search(self, query: str, max_documents: Optional[int] = None) -> Dict[str, Any]:
+    async def _search(
+        self, query: str, max_documents: Optional[int] = None
+    ) -> Dict[str, Any]:
         if not self.client:
             return {"status": "error", "data": None, "message": "SELTZ_API_KEY not set"}
         try:
-            response = self.client.search(query, max_documents=max_documents or self.max_documents)
+            response = self.client.search(
+                query, max_documents=max_documents or self.max_documents
+            )
             docs = []
             for doc in getattr(response, "documents", []) or []:
                 d: Dict[str, Any] = {}
@@ -64,7 +68,11 @@ class SeltzTools:
                     d["content"] = doc.content
                 if d:
                     docs.append(d)
-            return {"status": "success", "data": docs, "message": f"Found {len(docs)} documents"}
+            return {
+                "status": "success",
+                "data": docs,
+                "message": f"Found {len(docs)} documents",
+            }
         except Exception as e:
             logger.error(f"Seltz search failed: {e}")
             return {"status": "error", "data": None, "message": str(e)}

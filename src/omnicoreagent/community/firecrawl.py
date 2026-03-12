@@ -1,13 +1,12 @@
-import json
 from os import getenv
 from typing import Any, Dict, List, Optional
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import logger
 
 try:
     from firecrawl import FirecrawlApp
 except ImportError:
     FirecrawlApp = None
+
 
 class FirecrawlBase:
     def __init__(self, api_key: Optional[str] = None):
@@ -23,6 +22,7 @@ class FirecrawlBase:
                 self.app = FirecrawlApp(api_key=self.api_key)
             except Exception:
                 self.app = None
+
 
 class FirecrawlScrape(FirecrawlBase):
     def get_tool(self) -> Tool:
@@ -40,22 +40,26 @@ class FirecrawlScrape(FirecrawlBase):
             function=self._scrape,
         )
 
-    async def _scrape(self, url: str, formats: Optional[List[str]] = None) -> Dict[str, Any]:
+    async def _scrape(
+        self, url: str, formats: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         if not self.app:
-             return {"status": "error", "data": None, "message": "Firecrawl API key not set"}
-        
+            return {
+                "status": "error",
+                "data": None,
+                "message": "Firecrawl API key not set",
+            }
+
         try:
             params = {}
-            if formats: params["formats"] = formats
-            
+            if formats:
+                params["formats"] = formats
+
             result = self.app.scrape_url(url, params=params)
-            return {
-                "status": "success",
-                "data": result,
-                "message": "Scrape successful"
-            }
+            return {"status": "success", "data": result, "message": "Scrape successful"}
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class FirecrawlCrawl(FirecrawlBase):
     def get_tool(self) -> Tool:
@@ -74,14 +78,21 @@ class FirecrawlCrawl(FirecrawlBase):
             function=self._crawl,
         )
 
-    async def _crawl(self, url: str, limit: int = 10, formats: Optional[List[str]] = None) -> Dict[str, Any]:
+    async def _crawl(
+        self, url: str, limit: int = 10, formats: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         if not self.app:
-             return {"status": "error", "data": None, "message": "Firecrawl API key not set"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "Firecrawl API key not set",
+            }
 
         try:
             params = {"limit": limit}
-            if formats: params["scrapeOptions"] = {"formats": formats}
-            
+            if formats:
+                params["scrapeOptions"] = {"formats": formats}
+
             # Firecrawl crawl returns a job ID or waits. Assuming sync wait for simplicity or handling async if library supports.
             # The library typically returns a job object or result.
             # Using the simplified sync call pattern from previous implementation
@@ -89,10 +100,11 @@ class FirecrawlCrawl(FirecrawlBase):
             return {
                 "status": "success",
                 "data": result,
-                "message": "Crawl initiated/completed"
+                "message": "Crawl initiated/completed",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class FirecrawlSearch(FirecrawlBase):
     def get_tool(self) -> Tool:
@@ -112,18 +124,18 @@ class FirecrawlSearch(FirecrawlBase):
 
     async def _search(self, query: str, limit: int = 5) -> Dict[str, Any]:
         if not self.app:
-             return {"status": "error", "data": None, "message": "Firecrawl API key not set"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "Firecrawl API key not set",
+            }
 
         try:
             # Note: Method name might vary based on version, assuming search() exists as per previous file
             # Previous file used app.search(query, **params)
             result = self.app.search(query, params={"limit": limit})
-             # Check if result has data/success attributes
+            # Check if result has data/success attributes
             data = result if isinstance(result, dict) else result.__dict__
-            return {
-                "status": "success",
-                "data": data,
-                "message": "Search completed"
-            }
+            return {"status": "success", "data": data, "message": "Search completed"}
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

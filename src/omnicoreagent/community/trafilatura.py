@@ -1,8 +1,6 @@
-import json
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug, logger
 
 try:
     from trafilatura import extract, extract_metadata, fetch_url, html2txt
@@ -10,6 +8,7 @@ try:
 
     try:
         from trafilatura.spider import focused_crawler
+
         SPIDER_AVAILABLE = True
     except ImportError:
         focused_crawler = None
@@ -22,7 +21,6 @@ except ImportError:
     reset_caches = None
     focused_crawler = None
     SPIDER_AVAILABLE = False
-
 
 
 class TrafilaturaTools:
@@ -44,7 +42,9 @@ class TrafilaturaTools:
         max_known_urls: int = 100000,
     ):
         if extract is None:
-            raise ImportError("`trafilatura` not installed. Please install using `pip install trafilatura`")
+            raise ImportError(
+                "`trafilatura` not installed. Please install using `pip install trafilatura`"
+            )
         self.output_format = output_format
         self.include_comments = include_comments
         self.include_tables = include_tables
@@ -85,23 +85,36 @@ class TrafilaturaTools:
                 "type": "object",
                 "properties": {
                     "url": {"type": "string"},
-                    "output_format": {"type": "string", "description": "txt, json, xml, markdown, csv, html"},
+                    "output_format": {
+                        "type": "string",
+                        "description": "txt, json, xml, markdown, csv, html",
+                    },
                 },
                 "required": ["url"],
             },
             function=self._extract_text,
         )
 
-    async def _extract_text(self, url: str, output_format: Optional[str] = None) -> Dict[str, Any]:
+    async def _extract_text(
+        self, url: str, output_format: Optional[str] = None
+    ) -> Dict[str, Any]:
         try:
             html_content = fetch_url(url)
             if not html_content:
-                return {"status": "error", "data": None, "message": f"Could not fetch {url}"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": f"Could not fetch {url}",
+                }
             params = self._get_extraction_params(output_format=output_format)
             result = extract(html_content, url=url, **params)
             reset_caches()
             if result is None:
-                return {"status": "error", "data": None, "message": f"Could not extract from {url}"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": f"Could not extract from {url}",
+                }
             return {"status": "success", "data": result, "message": "Text extracted"}
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
@@ -124,12 +137,26 @@ class TrafilaturaExtractMetadata(TrafilaturaTools):
         try:
             html_content = fetch_url(url)
             if not html_content:
-                return {"status": "error", "data": None, "message": f"Could not fetch {url}"}
-            metadata_doc = extract_metadata(html_content, default_url=url, extensive=True)
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": f"Could not fetch {url}",
+                }
+            metadata_doc = extract_metadata(
+                html_content, default_url=url, extensive=True
+            )
             reset_caches()
             if metadata_doc is None:
-                return {"status": "error", "data": None, "message": f"No metadata from {url}"}
-            return {"status": "success", "data": metadata_doc.as_dict(), "message": "Metadata extracted"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": f"No metadata from {url}",
+                }
+            return {
+                "status": "success",
+                "data": metadata_doc.as_dict(),
+                "message": "Metadata extracted",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -150,13 +177,23 @@ class TrafilaturaHtmlToText(TrafilaturaTools):
             function=self._html_to_text,
         )
 
-    async def _html_to_text(self, html_content: str, clean: bool = True) -> Dict[str, Any]:
+    async def _html_to_text(
+        self, html_content: str, clean: bool = True
+    ) -> Dict[str, Any]:
         try:
             result = html2txt(html_content, clean=clean)
             reset_caches()
             if not result:
-                return {"status": "error", "data": None, "message": "Could not extract text from HTML"}
-            return {"status": "success", "data": result, "message": "HTML converted to text"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": "Could not extract text from HTML",
+                }
+            return {
+                "status": "success",
+                "data": result,
+                "message": "HTML converted to text",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -195,8 +232,17 @@ class TrafilaturaBatchExtract(TrafilaturaTools):
                 except Exception:
                     failed.append(url)
             reset_caches()
-            data = {"successful": len(results), "failed": len(failed), "results": results, "failed_urls": failed}
-            return {"status": "success", "data": data, "message": f"Extracted {len(results)}/{len(urls)} URLs"}
+            data = {
+                "successful": len(results),
+                "failed": len(failed),
+                "results": results,
+                "failed_urls": failed,
+            }
+            return {
+                "status": "success",
+                "data": data,
+                "message": f"Extracted {len(results)}/{len(urls)} URLs",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -217,9 +263,15 @@ class TrafilaturaCrawl(TrafilaturaTools):
             function=self._crawl,
         )
 
-    async def _crawl(self, homepage_url: str, extract_content: bool = False) -> Dict[str, Any]:
+    async def _crawl(
+        self, homepage_url: str, extract_content: bool = False
+    ) -> Dict[str, Any]:
         if not SPIDER_AVAILABLE:
-            return {"status": "error", "data": None, "message": "Trafilatura spider module not available"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "Trafilatura spider module not available",
+            }
         try:
             to_visit, known_links = focused_crawler(
                 homepage=homepage_url,
@@ -245,6 +297,10 @@ class TrafilaturaCrawl(TrafilaturaTools):
                         pass
                 data["extracted_content"] = extracted
             reset_caches()
-            return {"status": "success", "data": data, "message": f"Crawled {homepage_url}"}
+            return {
+                "status": "success",
+                "data": data,
+                "message": f"Crawled {homepage_url}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

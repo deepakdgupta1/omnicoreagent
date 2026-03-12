@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
+from typing import Callable, Dict, Optional, TypeVar
 
 from omnicoreagent.core.utils import logger
 
@@ -22,6 +22,7 @@ from omnicoreagent.core.utils import logger
 
 class RetryStrategy(Enum):
     """Retry backoff strategies."""
+
     FIXED = "fixed"
     EXPONENTIAL = "exponential"
     LINEAR = "linear"
@@ -78,7 +79,7 @@ def calculate_delay(
     elif config.strategy == RetryStrategy.LINEAR:
         delay = config.base_delay * (attempt + 1)
     else:  # EXPONENTIAL
-        delay = config.base_delay * (2 ** attempt)
+        delay = config.base_delay * (2**attempt)
 
     # Apply max delay cap
     delay = min(delay, config.max_delay)
@@ -142,7 +143,7 @@ async def retry_async(
                     f"All {config.max_retries} retries exhausted: "
                     f"{type(e).__name__}: {e}"
                 )
-        except Exception as e:
+        except Exception:
             # Non-retryable exception
             raise
 
@@ -166,7 +167,9 @@ def with_retry(config: Optional[RetryConfig] = None):
         @wraps(func)
         async def wrapper(*args, **kwargs) -> T:
             return await retry_async(func, *args, config=config, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -177,8 +180,9 @@ def with_retry(config: Optional[RetryConfig] = None):
 
 class CircuitState(Enum):
     """Circuit breaker states."""
-    CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Failing, reject requests
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Failing, reject requests
     HALF_OPEN = "half_open"  # Testing if service recovered
 
 
@@ -275,9 +279,7 @@ class CircuitBreaker:
         state = self.state
 
         if state == CircuitState.OPEN:
-            retry_after = (
-                self._last_failure_time + self.config.timeout - time.time()
-            )
+            retry_after = self._last_failure_time + self.config.timeout - time.time()
             raise CircuitBreakerOpenError(self.name, max(0, retry_after))
 
         return self
@@ -336,6 +338,7 @@ async def resilient_call(
     Returns:
         Result of func
     """
+
     async def wrapped():
         if circuit_breaker:
             async with circuit_breaker:

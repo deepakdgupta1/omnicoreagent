@@ -19,7 +19,7 @@ import ast
 import re
 import textwrap
 from datetime import datetime
-from typing import Union, List, Dict, Any, Optional
+from typing import Union, List, Dict, Any
 import requests
 
 from omnicoreagent import ToolRegistry
@@ -290,8 +290,8 @@ def create_omnirex_tools() -> ToolRegistry:
         Generate a professional HTML investment report styled like McKinsey/Goldman Sachs.
 
         **When to use:**
-        Use this tool as the FINAL STEP to compile all due diligence findings into a 
-        polished, investor-ready HTML document. This tool does NOT use an LLM - it directly 
+        Use this tool as the FINAL STEP to compile all due diligence findings into a
+        polished, investor-ready HTML document. This tool does NOT use an LLM - it directly
         formats your content into a professional template.
 
         **What it produces:**
@@ -299,7 +299,7 @@ def create_omnirex_tools() -> ToolRegistry:
         - Professional header with company name and report date
         - Executive summary section with gold accent styling
         - Embedded infographic dashboard (if path provided)
-        - Embedded financial charts (if path provided)  
+        - Embedded financial charts (if path provided)
         - Structured sections (Financial, Market, Team, Risks, etc.)
         - Full markdown support (headers, bold, italic, lists, tables, code)
         - Print-friendly layout for PDF export
@@ -464,7 +464,7 @@ def create_omnirex_tools() -> ToolRegistry:
             padding: 0;
             box-sizing: border-box;
         }}
-        
+
         /* === BASE STYLES === */
         body {{
             font-family: 'Georgia', 'Times New Roman', serif;
@@ -475,14 +475,14 @@ def create_omnirex_tools() -> ToolRegistry:
             margin: 0 auto;
             padding: 40px 60px;
         }}
-        
+
         /* === HEADER === */
         .header {{
             border-bottom: 3px solid #d4af37;
             padding-bottom: 30px;
             margin-bottom: 40px;
         }}
-        
+
         .header-meta {{
             font-family: 'Inter', sans-serif;
             color: #666;
@@ -491,7 +491,7 @@ def create_omnirex_tools() -> ToolRegistry:
             letter-spacing: 2px;
             margin-bottom: 10px;
         }}
-        
+
         h1 {{
             font-family: 'Inter', sans-serif;
             color: #1a365d;
@@ -500,14 +500,14 @@ def create_omnirex_tools() -> ToolRegistry:
             margin-bottom: 10px;
             letter-spacing: -0.5px;
         }}
-        
+
         .date {{
             font-family: 'Inter', sans-serif;
             color: #888;
             font-style: italic;
             font-size: 0.9em;
         }}
-        
+
         /* === SECTION HEADERS === */
         h2 {{
             font-family: 'Inter', sans-serif;
@@ -518,7 +518,7 @@ def create_omnirex_tools() -> ToolRegistry:
             padding-bottom: 8px;
             border-bottom: 1px solid #e0e0e0;
         }}
-        
+
         h3 {{
             font-family: 'Inter', sans-serif;
             color: #2d4a6f;
@@ -526,13 +526,13 @@ def create_omnirex_tools() -> ToolRegistry:
             margin-top: 25px;
             margin-bottom: 10px;
         }}
-        
+
         /* === PARAGRAPHS === */
         p {{
             margin-bottom: 15px;
             text-align: justify;
         }}
-        
+
         /* === EXECUTIVE SUMMARY === */
         .executive-summary {{
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -541,7 +541,7 @@ def create_omnirex_tools() -> ToolRegistry:
             margin: 30px 0;
             border-radius: 0 8px 8px 0;
         }}
-        
+
         .executive-summary h2 {{
             margin-top: 0;
             border-bottom: none;
@@ -550,12 +550,12 @@ def create_omnirex_tools() -> ToolRegistry:
             text-transform: uppercase;
             letter-spacing: 1px;
         }}
-        
+
         /* === REPORT SECTIONS === */
         .report-section {{
             margin-bottom: 30px;
         }}
-        
+
         /* === TABLES === */
         table {{
             width: 100%;
@@ -564,7 +564,7 @@ def create_omnirex_tools() -> ToolRegistry:
             font-family: 'Inter', sans-serif;
             font-size: 0.9em;
         }}
-        
+
         th {{
             text-align: left;
             background: #1a365d;
@@ -572,25 +572,25 @@ def create_omnirex_tools() -> ToolRegistry:
             padding: 12px 15px;
             font-weight: 600;
         }}
-        
+
         td {{
             padding: 12px 15px;
             border-bottom: 1px solid #ddd;
         }}
-        
+
         tr:nth-child(even) {{
             background: #f8f9fa;
         }}
-        
+
         /* === LISTS === */
         ul, ol {{
             margin: 15px 0 15px 25px;
         }}
-        
+
         li {{
             margin-bottom: 8px;
         }}
-        
+
         /* === CODE === */
         code {{
             background: #f4f4f4;
@@ -599,7 +599,7 @@ def create_omnirex_tools() -> ToolRegistry:
             font-size: 0.9em;
             font-family: 'Monaco', 'Consolas', monospace;
         }}
-        
+
         pre {{
             background: #2d3748;
             color: #f8f8f2;
@@ -608,19 +608,19 @@ def create_omnirex_tools() -> ToolRegistry:
             overflow-x: auto;
             margin: 20px 0;
         }}
-        
+
         /* === FIGURES & IMAGES === */
         figure {{
             margin: 30px 0;
             text-align: center;
         }}
-        
+
         figure img {{
             max-width: 100%;
             border-radius: 8px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }}
-        
+
         figcaption {{
             font-family: 'Inter', sans-serif;
             font-size: 0.85em;
@@ -628,14 +628,14 @@ def create_omnirex_tools() -> ToolRegistry:
             margin-top: 12px;
             font-style: italic;
         }}
-        
+
         .dashboard-figure {{
             background: #f8f9fa;
             padding: 20px;
             border-radius: 12px;
             margin: 30px 0;
         }}
-        
+
         /* === RECOMMENDATION BOX === */
         .recommendation {{
             background: #1a365d;
@@ -645,13 +645,13 @@ def create_omnirex_tools() -> ToolRegistry:
             text-align: center;
             border-radius: 8px;
         }}
-        
+
         .recommendation h2 {{
             color: #d4af37;
             border: none;
             margin: 0 0 10px 0;
         }}
-        
+
         /* === FOOTER === */
         .footer {{
             margin-top: 50px;
@@ -660,20 +660,20 @@ def create_omnirex_tools() -> ToolRegistry:
             text-align: center;
             font-family: 'Inter', sans-serif;
         }}
-        
+
         .footer-brand {{
             color: #1a365d;
             font-weight: 600;
             font-size: 0.9em;
             margin-bottom: 5px;
         }}
-        
+
         .footer-legal {{
             color: #888;
             font-size: 0.8em;
             font-style: italic;
         }}
-        
+
         /* === PRINT STYLES === */
         @media print {{
             body {{
@@ -694,19 +694,19 @@ def create_omnirex_tools() -> ToolRegistry:
         <h1>{company_name}</h1>
         <div class="date">{report_title} • {current_date}</div>
     </header>
-    
+
     <main>
         <section class="executive-summary">
             <h2>Executive Summary</h2>
             {dashboard_html}
             {robust_to_html(main_content)}
         </section>
-        
+
         {chart_html}
-        
+
         {sections_html if sections_html else ""}
     </main>
-    
+
     <footer class="footer">
         <div class="footer-brand">Generated by OmniRexFlora DeepAgent</div>
         <div class="footer-legal">
@@ -740,8 +740,8 @@ def create_omnirex_tools() -> ToolRegistry:
         Generate a professional Goldman Sachs-style investment infographic (one-pager).
 
         **When to use:**
-        Use this tool to create a visually stunning, investor-ready summary of a company's 
-        key metrics. This is ideal for executive presentations, pitch decks, or investment 
+        Use this tool to create a visually stunning, investor-ready summary of a company's
+        key metrics. This is ideal for executive presentations, pitch decks, or investment
         committee materials. Generate this BEFORE the HTML report.
 
         **What it produces:**
@@ -1281,8 +1281,8 @@ def create_omnirex_tools() -> ToolRegistry:
         Generate a professional revenue projection chart with bear/base/bull scenarios.
 
         **When to use:**
-        Use this tool when you need to visualize financial projections for an investment 
-        analysis. The chart shows three scenarios (pessimistic, expected, optimistic) to 
+        Use this tool when you need to visualize financial projections for an investment
+        analysis. The chart shows three scenarios (pessimistic, expected, optimistic) to
         help investors understand the range of possible outcomes.
 
         **What it produces:**

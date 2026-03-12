@@ -1,15 +1,14 @@
-from os import getenv, path
+from os import getenv
 from typing import Any, Dict, Optional, Iterator
-from uuid import uuid4
 import base64
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import logger
 
 try:
     from elevenlabs import ElevenLabs
 except ImportError:
     ElevenLabs = None
+
 
 class ElevenLabsBase:
     def __init__(self, api_key: Optional[str] = None):
@@ -26,10 +25,11 @@ class ElevenLabsBase:
                 self.client = ElevenLabs(api_key=self.api_key)
             except Exception:
                 self.client = None
-    
+
     def _process_audio_to_base64(self, audio_generator: Iterator[bytes]) -> str:
         audio_bytes = b"".join(audio_generator)
-        return base64.b64encode(audio_bytes).decode('utf-8')
+        return base64.b64encode(audio_bytes).decode("utf-8")
+
 
 class ElevenLabsGetVoices(ElevenLabsBase):
     def get_tool(self) -> Tool:
@@ -45,24 +45,31 @@ class ElevenLabsGetVoices(ElevenLabsBase):
 
     async def _get_voices(self) -> Dict[str, Any]:
         if not self.client:
-             return {"status": "error", "data": None, "message": "ELEVEN_LABS_API_KEY not set"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "ELEVEN_LABS_API_KEY not set",
+            }
 
         try:
             voices_response = self.client.voices.get_all()
             voices_list = []
             for voice in voices_response.voices:
-                voices_list.append({
-                    "id": voice.voice_id,
-                    "name": voice.name,
-                    "description": voice.description
-                })
+                voices_list.append(
+                    {
+                        "id": voice.voice_id,
+                        "name": voice.name,
+                        "description": voice.description,
+                    }
+                )
             return {
                 "status": "success",
                 "data": voices_list,
-                "message": f"Found {len(voices_list)} voices"
+                "message": f"Found {len(voices_list)} voices",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class ElevenLabsGenerateSoundEffect(ElevenLabsBase):
     def get_tool(self) -> Tool:
@@ -80,9 +87,15 @@ class ElevenLabsGenerateSoundEffect(ElevenLabsBase):
             function=self._generate,
         )
 
-    async def _generate(self, prompt: str, duration_seconds: Optional[float] = None) -> Dict[str, Any]:
+    async def _generate(
+        self, prompt: str, duration_seconds: Optional[float] = None
+    ) -> Dict[str, Any]:
         if not self.client:
-             return {"status": "error", "data": None, "message": "ELEVEN_LABS_API_KEY not set"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "ELEVEN_LABS_API_KEY not set",
+            }
 
         try:
             audio_generator = self.client.text_to_sound_effects.convert(
@@ -92,13 +105,19 @@ class ElevenLabsGenerateSoundEffect(ElevenLabsBase):
             return {
                 "status": "success",
                 "data": {"audio_base64_length": len(b64_audio)},
-                "message": "Sound effect generated"
+                "message": "Sound effect generated",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
+
 class ElevenLabsTextToSpeech(ElevenLabsBase):
-    def __init__(self, api_key: Optional[str] = None, voice_id: str = "JBFqnCBsd6RMkjVDRZzb", model_id: str = "eleven_multilingual_v2"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        voice_id: str = "JBFqnCBsd6RMkjVDRZzb",
+        model_id: str = "eleven_multilingual_v2",
+    ):
         super().__init__(api_key)
         self.voice_id = voice_id
         self.model_id = model_id
@@ -119,7 +138,11 @@ class ElevenLabsTextToSpeech(ElevenLabsBase):
 
     async def _convert(self, prompt: str) -> Dict[str, Any]:
         if not self.client:
-             return {"status": "error", "data": None, "message": "ELEVEN_LABS_API_KEY not set"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "ELEVEN_LABS_API_KEY not set",
+            }
 
         try:
             audio_generator = self.client.text_to_speech.convert(
@@ -131,7 +154,7 @@ class ElevenLabsTextToSpeech(ElevenLabsBase):
             return {
                 "status": "success",
                 "data": {"audio_base64_length": len(b64_audio)},
-                "message": "Speech generated"
+                "message": "Speech generated",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

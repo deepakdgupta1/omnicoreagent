@@ -1,13 +1,12 @@
-import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug
 
 try:
     import yfinance as yf
 except ImportError:
     yf = None
+
 
 class YFinanceBase:
     def __init__(self, session: Optional[Any] = None):
@@ -17,6 +16,7 @@ class YFinanceBase:
                 "Please install it with `pip install yfinance`."
             )
         self.session = session
+
 
 class YFinanceGetStockPrice(YFinanceBase):
     def get_tool(self) -> Tool:
@@ -39,13 +39,18 @@ class YFinanceGetStockPrice(YFinanceBase):
             price = stock.info.get("regularMarketPrice", stock.info.get("currentPrice"))
             if price:
                 return {
-                    "status": "success", 
+                    "status": "success",
                     "data": {"symbol": symbol, "price": price},
-                    "message": f"Current price for {symbol}: {price}"
+                    "message": f"Current price for {symbol}: {price}",
                 }
-            return {"status": "error", "data": None, "message": f"Could not fetch price for {symbol}"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": f"Could not fetch price for {symbol}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class YFinanceGetCompanyInfo(YFinanceBase):
     def get_tool(self) -> Tool:
@@ -70,11 +75,16 @@ class YFinanceGetCompanyInfo(YFinanceBase):
                 return {
                     "status": "success",
                     "data": info,
-                    "message": f"Company info for {symbol}"
+                    "message": f"Company info for {symbol}",
                 }
-            return {"status": "error", "data": None, "message": f"No info found for {symbol}"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": f"No info found for {symbol}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class YFinanceGetHistoricalPrices(YFinanceBase):
     def get_tool(self) -> Tool:
@@ -93,19 +103,22 @@ class YFinanceGetHistoricalPrices(YFinanceBase):
             function=self._get_history,
         )
 
-    async def _get_history(self, symbol: str, period: str = "1mo", interval: str = "1d") -> Dict[str, Any]:
+    async def _get_history(
+        self, symbol: str, period: str = "1mo", interval: str = "1d"
+    ) -> Dict[str, Any]:
         try:
             stock = yf.Ticker(symbol, session=self.session)
             hist = stock.history(period=period, interval=interval)
             data = hist.reset_index().to_dict(orient="records")
             # Convert timestamps to str
             for d in data:
-                if 'Date' in d: d['Date'] = str(d['Date'])
-            
+                if "Date" in d:
+                    d["Date"] = str(d["Date"])
+
             return {
                 "status": "success",
                 "data": data,
-                "message": f"Historical data for {symbol}"
+                "message": f"Historical data for {symbol}",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

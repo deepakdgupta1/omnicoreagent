@@ -1,9 +1,6 @@
-import json
-from os import getenv
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import logger
 
 try:
     from google.oauth2.credentials import Credentials
@@ -13,6 +10,7 @@ except ImportError:
     Resource = None
     build = None
 
+
 class GoogleDriveBase:
     def __init__(self):
         if build is None:
@@ -20,27 +18,35 @@ class GoogleDriveBase:
                 "Could not import `google-api-python-client` python package. "
                 "Please install it using `pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib`."
             )
-        self.scopes = ["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/drive.file"]
+        self.scopes = [
+            "https://www.googleapis.com/auth/drive.readonly",
+            "https://www.googleapis.com/auth/drive.file",
+        ]
         self.creds = None
         self.service = None
         self.token_path = "token.json"
 
     def _ensure_service(self):
-        if self.service: return
-        
+        if self.service:
+            return
+
         token_file = Path(self.token_path)
         if token_file.exists():
             try:
-                self.creds = Credentials.from_authorized_user_file(str(token_file), self.scopes)
-            except: pass
-        
+                self.creds = Credentials.from_authorized_user_file(
+                    str(token_file), self.scopes
+                )
+            except:
+                pass
+
         if self.creds and self.creds.valid:
             self.service = build("drive", "v3", credentials=self.creds)
         else:
-             pass
+            pass
 
         if not self.service:
-             raise ValueError("Google Drive service could not be initialized.")
+            raise ValueError("Google Drive service could not be initialized.")
+
 
 class GoogleDriveListFiles(GoogleDriveBase):
     def get_tool(self) -> Tool:
@@ -57,17 +63,25 @@ class GoogleDriveListFiles(GoogleDriveBase):
             function=self._list_files,
         )
 
-    async def _list_files(self, query: Optional[str] = None, limit: int = 10) -> Dict[str, Any]:
+    async def _list_files(
+        self, query: Optional[str] = None, limit: int = 10
+    ) -> Dict[str, Any]:
         try:
             self._ensure_service()
-            results = self.service.files().list(
-                q=query, pageSize=limit, fields="nextPageToken, files(id, name, mimeType)"
-            ).execute()
+            results = (
+                self.service.files()
+                .list(
+                    q=query,
+                    pageSize=limit,
+                    fields="nextPageToken, files(id, name, mimeType)",
+                )
+                .execute()
+            )
             files = results.get("files", [])
             return {
                 "status": "success",
                 "data": files,
-                "message": f"Found {len(files)} files"
+                "message": f"Found {len(files)} files",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

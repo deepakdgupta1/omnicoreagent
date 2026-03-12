@@ -11,7 +11,7 @@ Run: python cookbook/deep_agent/code_review_agent.py
 
 import asyncio
 import os
-from typing import Dict, List, Any
+from typing import Dict, Any
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -275,17 +275,17 @@ def run_script(script):
 
     result = await agent.run(f"""
     Review the following Python code for quality, security, and best practices:
-    
+
     ```python
     {sample_code}
     ```
-    
+
     Use the available tools to:
     1. Analyze code quality
     2. Check for security issues
     3. Check best practices
     4. Generate a comprehensive review summary
-    
+
     Provide specific, actionable recommendations.
     """)
 

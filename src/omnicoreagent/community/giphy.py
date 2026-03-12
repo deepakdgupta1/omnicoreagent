@@ -1,10 +1,10 @@
 import uuid
 from os import getenv
-from typing import Any, List, Optional, Union
+from typing import Any, Optional
 
 import httpx
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import Image, log_debug, logger
+from omnicoreagent.core.utils import Image, logger
 
 
 class GiphySearch:
@@ -25,7 +25,10 @@ class GiphySearch:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string", "description": "A text description of the required gif."},
+                    "query": {
+                        "type": "string",
+                        "description": "A text description of the required gif.",
+                    },
                     "limit": {"type": "integer", "default": 1},
                 },
                 "required": ["query"],
@@ -62,21 +65,29 @@ class GiphySearch:
                 gif_urls.append(gif_url)
 
                 # Create ImageArtifact for the GIF
-                image_artifact = Image(id=media_id, url=gif_url, alt_text=alt_text, revised_prompt=query)
+                image_artifact = Image(
+                    id=media_id, url=gif_url, alt_text=alt_text, revised_prompt=query
+                )
                 image_artifacts.append(image_artifact)
 
             if image_artifacts:
                 return {
                     "status": "success",
                     "data": {"gif_urls": gif_urls, "images": str(image_artifacts)},
-                    "message": f"Found {len(gif_urls)} GIF(s)"
+                    "message": f"Found {len(gif_urls)} GIF(s)",
                 }
             else:
                 return {"status": "success", "data": [], "message": "No gifs found"}
 
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error occurred: {e.response.status_code} - {e.response.text}")
-            return {"status": "error", "data": None, "message": f"HTTP error occurred: {e.response.status_code}"}
+            logger.error(
+                f"HTTP error occurred: {e.response.status_code} - {e.response.text}"
+            )
+            return {
+                "status": "error",
+                "data": None,
+                "message": f"HTTP error occurred: {e.response.status_code}",
+            }
         except Exception as e:
             logger.error(f"An error occurred: {e}")
             return {"status": "error", "data": None, "message": str(e)}

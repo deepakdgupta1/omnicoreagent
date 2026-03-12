@@ -31,7 +31,6 @@ Then test the endpoints:
 Visit http://localhost:8000/docs for the interactive Swagger UI.
 """
 
-import os
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -46,7 +45,7 @@ def main():
     # Create the agent
     agent = OmniCoreAgent(
         name="DemoAgent",
-        system_instruction="""You are a helpful AI assistant. 
+        system_instruction="""You are a helpful AI assistant.
         Answer questions clearly and concisely.
         When performing calculations, show your work.""",
         model_config={

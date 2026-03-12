@@ -4,7 +4,6 @@ OmniServe SSE (Server-Sent Events) Utilities.
 Provides utilities for streaming agent events via SSE.
 """
 
-import asyncio
 import json
 from typing import TYPE_CHECKING, Union, AsyncGenerator
 
@@ -53,25 +52,25 @@ async def run_agent_stream(
 ) -> AsyncGenerator[str, None]:
     """
     Run the agent and stream result via SSE.
-    
+
     Simplified implementation that just waits for the final result
     without intermediate event streaming, to ensure stability.
-    
+
     Args:
         agent: The agent to run (OmniCoreAgent or DeepAgent)
         query: The user query
         session_id: Session ID for the conversation
-        
+
     Yields:
         SSE-formatted event strings
     """
     # Yield session start event
     yield format_sse_event("session", {"session_id": session_id, "status": "started"})
-    
+
     try:
         # Run agent directly (blocking/async wait)
         response = await agent.run(query, session_id=session_id)
-        
+
         # Yield complete event with result
         yield format_sse_event(
             "complete",
@@ -82,7 +81,7 @@ async def run_agent_stream(
                 "metric": response.get("metric"),
             },
         )
-        
+
     except Exception as e:
         logger.error(f"OmniServe SSE: Agent run error: {e}")
         yield format_sse_event(
@@ -92,7 +91,7 @@ async def run_agent_stream(
                 "session_id": session_id,
             },
         )
-        
+
     # Yield session ended event
     yield format_sse_event("session", {"session_id": session_id, "status": "ended"})
 

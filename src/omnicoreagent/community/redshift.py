@@ -1,14 +1,13 @@
-import csv
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug, log_error, logger
 
 try:
     import redshift_connector
 except ImportError:
     redshift_connector = None
+
 
 class RedshiftBase:
     def __init__(
@@ -35,7 +34,9 @@ class RedshiftBase:
         self.user = user
         self.password = password
         self.iam = iam
-        self.cluster_identifier = cluster_identifier or getenv("REDSHIFT_CLUSTER_IDENTIFIER")
+        self.cluster_identifier = cluster_identifier or getenv(
+            "REDSHIFT_CLUSTER_IDENTIFIER"
+        )
         self.region = region or getenv("AWS_REGION")
         self.db_user = db_user or getenv("REDSHIFT_DB_USER")
         self.access_key_id = access_key_id or getenv("AWS_ACCESS_KEY_ID")
@@ -44,40 +45,52 @@ class RedshiftBase:
         self.profile = profile or getenv("AWS_PROFILE")
         self.ssl = ssl
         if redshift_connector is None:
-             raise ImportError("redshift_connector not installed. Please install it using `pip install redshift_connector`.")
+            raise ImportError(
+                "redshift_connector not installed. Please install it using `pip install redshift_connector`."
+            )
         self.table_schema = table_schema
         self._connection = None
 
     def _get_connection(self):
         if self._connection:
             return self._connection
-        
+
         kwargs = {
             "host": self.host,
             "port": self.port,
             "database": self.database,
             "ssl": self.ssl,
         }
-        
+
         if self.iam:
             kwargs["iam"] = True
-            if self.cluster_identifier: kwargs["cluster_identifier"] = self.cluster_identifier
-            if self.db_user: kwargs["db_user"] = self.db_user
-            if self.region: kwargs["region"] = self.region
-            if self.profile: kwargs["profile"] = self.profile
+            if self.cluster_identifier:
+                kwargs["cluster_identifier"] = self.cluster_identifier
+            if self.db_user:
+                kwargs["db_user"] = self.db_user
+            if self.region:
+                kwargs["region"] = self.region
+            if self.profile:
+                kwargs["profile"] = self.profile
             else:
-               if self.access_key_id: kwargs["access_key_id"] = self.access_key_id
-               if self.secret_access_key: kwargs["secret_access_key"] = self.secret_access_key
-               if self.session_token: kwargs["session_token"] = self.session_token
+                if self.access_key_id:
+                    kwargs["access_key_id"] = self.access_key_id
+                if self.secret_access_key:
+                    kwargs["secret_access_key"] = self.secret_access_key
+                if self.session_token:
+                    kwargs["session_token"] = self.session_token
         else:
-            if self.user: kwargs["user"] = self.user
-            if self.password: kwargs["password"] = self.password
+            if self.user:
+                kwargs["user"] = self.user
+            if self.password:
+                kwargs["password"] = self.password
 
         # Filter None
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        
+
         self._connection = redshift_connector.connect(**kwargs)
         return self._connection
+
 
 class RedshiftShowTables(RedshiftBase):
     def get_tool(self) -> Tool:
@@ -97,16 +110,17 @@ class RedshiftShowTables(RedshiftBase):
             with conn.cursor() as cur:
                 cur.execute(
                     "SELECT table_name FROM information_schema.tables WHERE table_schema = %s;",
-                    (self.table_schema,)
+                    (self.table_schema,),
                 )
                 tables = [row[0] for row in cur.fetchall()]
                 return {
                     "status": "success",
                     "data": tables,
-                    "message": f"Tables: {', '.join(tables)}"
+                    "message": f"Tables: {', '.join(tables)}",
                 }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class RedshiftRunQuery(RedshiftBase):
     def get_tool(self) -> Tool:
@@ -135,13 +149,13 @@ class RedshiftRunQuery(RedshiftBase):
                     return {
                         "status": "success",
                         "data": data,
-                        "message": f"Returned {len(data)} rows"
+                        "message": f"Returned {len(data)} rows",
                     }
                 else:
                     return {
                         "status": "success",
                         "data": None,
-                        "message": "Query executed"
+                        "message": "Query executed",
                     }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

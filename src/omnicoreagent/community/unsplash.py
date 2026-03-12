@@ -1,11 +1,11 @@
 import json
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug, logger
+from omnicoreagent.core.utils import logger
 
 
 class UnsplashBase:
@@ -14,9 +14,13 @@ class UnsplashBase:
     def __init__(self, access_key: Optional[str] = None):
         self.access_key = access_key or getenv("UNSPLASH_ACCESS_KEY")
         if not self.access_key:
-            logger.warning("No Unsplash API key provided. Set UNSPLASH_ACCESS_KEY environment variable.")
+            logger.warning(
+                "No Unsplash API key provided. Set UNSPLASH_ACCESS_KEY environment variable."
+            )
 
-    def _make_request(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _make_request(
+        self, endpoint: str, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         url = f"{self.base_url}{endpoint}"
         if params:
             url = f"{url}?{urlencode(params)}"
@@ -53,7 +57,10 @@ class UnsplashSearchPhotos(UnsplashBase):
                     "query": {"type": "string"},
                     "per_page": {"type": "integer", "default": 10},
                     "page": {"type": "integer", "default": 1},
-                    "orientation": {"type": "string", "enum": ["landscape", "portrait", "squarish"]},
+                    "orientation": {
+                        "type": "string",
+                        "enum": ["landscape", "portrait", "squarish"],
+                    },
                 },
                 "required": ["query"],
             },
@@ -67,10 +74,12 @@ class UnsplashSearchPhotos(UnsplashBase):
         page: int = 1,
         orientation: Optional[str] = None,
     ) -> str:
-        if not self.access_key: return "No API Key"
+        if not self.access_key:
+            return "No API Key"
         try:
             params = {"query": query, "per_page": per_page, "page": page}
-            if orientation: params["orientation"] = orientation
+            if orientation:
+                params["orientation"] = orientation
 
             response = self._make_request("/search/photos", params)
             photos = [self._format_photo(p) for p in response.get("results", [])]
@@ -95,7 +104,8 @@ class UnsplashGetPhoto(UnsplashBase):
         )
 
     def _get_photo(self, photo_id: str) -> str:
-        if not self.access_key: return "No API Key"
+        if not self.access_key:
+            return "No API Key"
         try:
             photo = self._make_request(f"/photos/{photo_id}")
             return json.dumps(self._format_photo(photo), indent=2)
@@ -119,12 +129,14 @@ class UnsplashGetRandomPhoto(UnsplashBase):
         )
 
     def _get_random_photo(self, query: Optional[str] = None, count: int = 1) -> str:
-        if not self.access_key: return "No API Key"
+        if not self.access_key:
+            return "No API Key"
         try:
             params = {"count": count}
-            if query: params["query"] = query
+            if query:
+                params["query"] = query
             response = self._make_request("/photos/random", params)
-            
+
             photos = response if isinstance(response, list) else [response]
             return json.dumps([self._format_photo(p) for p in photos], indent=2)
         except Exception as e:
@@ -147,7 +159,8 @@ class UnsplashDownloadPhoto(UnsplashBase):
         )
 
     def _download_photo(self, photo_id: str) -> str:
-        if not self.access_key: return "No API Key"
+        if not self.access_key:
+            return "No API Key"
         try:
             response = self._make_request(f"/photos/{photo_id}/download")
             return json.dumps({"url": response.get("url")})

@@ -1,5 +1,4 @@
 import base64
-import json
 from os import getenv
 from typing import Any, Dict, Optional, Union
 
@@ -34,10 +33,9 @@ class BitbucketTools:
         self.workspace = workspace
         self.repo_slug = repo_slug
 
-        
         self.headers = {"Accept": "application/json"}
         if self.username and self.auth_password:
-             self.headers["Authorization"] = f"Basic {self._generate_access_token()}"
+            self.headers["Authorization"] = f"Basic {self._generate_access_token()}"
 
     def _generate_access_token(self) -> str:
         auth_str = f"{self.username}:{self.auth_password}"
@@ -53,10 +51,12 @@ class BitbucketTools:
         data: Optional[Dict[str, Any]] = None,
     ) -> Union[str, Dict[str, Any]]:
         if not self.headers.get("Authorization"):
-             raise ValueError("Username and password or token are required")
-             
+            raise ValueError("Username and password or token are required")
+
         url = f"{self.base_url}{endpoint}"
-        response = requests.request(method, url, headers=self.headers, json=data, params=params)
+        response = requests.request(
+            method, url, headers=self.headers, json=data, params=params
+        )
         response.raise_for_status()
         encoding_type = response.headers.get("Content-Type", "application/json")
         if encoding_type.startswith("application/json"):
@@ -68,7 +68,7 @@ class BitbucketTools:
         return {}
 
     def get_tool(self) -> Tool:
-        # Defaults to list_repositories if generic tool is requested, 
+        # Defaults to list_repositories if generic tool is requested,
         # but typically we'd want specific tools or a collection.
         # For now, we return list_repositories as the default "get_tool"
         return Tool(
@@ -84,12 +84,13 @@ class BitbucketTools:
         )
 
     # Individual Tool Classes for better granularity
-    
+
+
 class BitbucketListRepos(BitbucketTools):
     def get_tool(self) -> Tool:
         return Tool(
             name="bitbucket_list_repos",
-             description="Get all repositories in the workspace.",
+            description="Get all repositories in the workspace.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -102,38 +103,60 @@ class BitbucketListRepos(BitbucketTools):
     async def _list_repositories(self, count: int = 10) -> Dict[str, Any]:
         try:
             if not self.workspace:
-                return {"status": "error", "data": None, "message": "Workspace is required"}
-                
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": "Workspace is required",
+                }
+
             count = min(count, 50)
             pagelen = min(count, 50)
             params = {"page": 1, "pagelen": pagelen}
 
-            repo = self._make_request("GET", f"/repositories/{self.workspace}", params=params)
-            return {"status": "success", "data": repo, "message": f"Found repositories in {self.workspace}"}
+            repo = self._make_request(
+                "GET", f"/repositories/{self.workspace}", params=params
+            )
+            return {
+                "status": "success",
+                "data": repo,
+                "message": f"Found repositories in {self.workspace}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class BitbucketGetRepoDetails(BitbucketTools):
     def get_tool(self) -> Tool:
         return Tool(
-             name="bitbucket_get_repo_details",
+            name="bitbucket_get_repo_details",
             description="Retrieves repository information.",
             inputSchema={
                 "type": "object",
                 "properties": {},
             },
-             function=self._get_repository_details,
+            function=self._get_repository_details,
         )
 
     async def _get_repository_details(self) -> Dict[str, Any]:
         try:
             if not self.workspace or not self.repo_slug:
-                return {"status": "error", "data": None, "message": "Workspace and Repo slug are required"}
-                
-            repo = self._make_request("GET", f"/repositories/{self.workspace}/{self.repo_slug}")
-            return {"status": "success", "data": repo, "message": f"Details for {self.repo_slug}"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": "Workspace and Repo slug are required",
+                }
+
+            repo = self._make_request(
+                "GET", f"/repositories/{self.workspace}/{self.repo_slug}"
+            )
+            return {
+                "status": "success",
+                "data": repo,
+                "message": f"Details for {self.repo_slug}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class BitbucketCreateRepo(BitbucketTools):
     def get_tool(self) -> Tool:
@@ -163,19 +186,29 @@ class BitbucketCreateRepo(BitbucketTools):
         language: Optional[str] = None,
     ) -> Dict[str, Any]:
         try:
-             if not self.workspace or not self.repo_slug:
-                return {"status": "error", "data": None, "message": "Workspace and Repo slug are required"}
+            if not self.workspace or not self.repo_slug:
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": "Workspace and Repo slug are required",
+                }
 
-             payload = {
+            payload = {
                 "name": name,
                 "scm": "git",
                 "is_private": is_private,
                 "description": description,
                 "language": language,
             }
-             if project:
+            if project:
                 payload["project"] = {"key": project}
-             repo = self._make_request("POST", f"/repositories/{self.workspace}/{self.repo_slug}", data=payload)
-             return {"status": "success", "data": repo, "message": f"Repository {name} created"}
+            repo = self._make_request(
+                "POST", f"/repositories/{self.workspace}/{self.repo_slug}", data=payload
+            )
+            return {
+                "status": "success",
+                "data": repo,
+                "message": f"Repository {name} created",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

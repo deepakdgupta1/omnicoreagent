@@ -7,13 +7,11 @@ Works for any domain based on user's system_instruction and tools.
 
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
-from datetime import datetime
 
 from omnicoreagent.omni_agent.deep_agent import DeepAgent
 from omnicoreagent.omni_agent.deep_agent.prompts import (
     DeepAgentPromptBuilder,
     DEEP_AGENT_ORCHESTRATION_PROMPT,
-    build_deep_agent_prompt,
 )
 from omnicoreagent.omni_agent.deep_agent.subagent_factory import (
     SubagentFactory,

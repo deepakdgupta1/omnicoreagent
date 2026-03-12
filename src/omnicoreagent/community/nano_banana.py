@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import os
-from io import BytesIO
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from uuid import uuid4
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
@@ -18,7 +17,18 @@ except ImportError:
     PILImage = None
 
 ALLOWED_MODELS = ["gemini-2.5-flash-image"]
-ALLOWED_RATIOS = ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"]
+ALLOWED_RATIOS = [
+    "1:1",
+    "2:3",
+    "3:2",
+    "3:4",
+    "4:3",
+    "4:5",
+    "5:4",
+    "9:16",
+    "16:9",
+    "21:9",
+]
 
 
 class NanoBananaImageGen:
@@ -46,9 +56,13 @@ class NanoBananaImageGen:
         self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
 
         if model not in ALLOWED_MODELS:
-            raise ValueError(f"Invalid model '{model}'. Supported: {', '.join(ALLOWED_MODELS)}")
+            raise ValueError(
+                f"Invalid model '{model}'. Supported: {', '.join(ALLOWED_MODELS)}"
+            )
         if self.aspect_ratio not in ALLOWED_RATIOS:
-            raise ValueError(f"Invalid aspect_ratio '{self.aspect_ratio}'. Supported: {', '.join(ALLOWED_RATIOS)}")
+            raise ValueError(
+                f"Invalid aspect_ratio '{self.aspect_ratio}'. Supported: {', '.join(ALLOWED_RATIOS)}"
+            )
         if not self.api_key:
             raise ValueError("GOOGLE_API_KEY not set.")
 
@@ -59,7 +73,10 @@ class NanoBananaImageGen:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "prompt": {"type": "string", "description": "Text description of the desired image"},
+                    "prompt": {
+                        "type": "string",
+                        "description": "Text description of the desired image",
+                    },
                 },
                 "required": ["prompt"],
             },
@@ -77,25 +94,54 @@ class NanoBananaImageGen:
             )
 
             response = client.models.generate_content(
-                model=self.model, contents=[prompt], config=cfg,
+                model=self.model,
+                contents=[prompt],
+                config=cfg,
             )
 
             if not hasattr(response, "candidates") or not response.candidates:
-                return {"status": "error", "data": None, "message": "No images generated"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": "No images generated",
+                }
 
             images_generated = []
             for candidate in response.candidates:
-                if not hasattr(candidate, "content") or not candidate.content or not candidate.content.parts:
+                if (
+                    not hasattr(candidate, "content")
+                    or not candidate.content
+                    or not candidate.content.parts
+                ):
                     continue
                 for part in candidate.content.parts:
-                    if hasattr(part, "inline_data") and part.inline_data and part.inline_data.data:
+                    if (
+                        hasattr(part, "inline_data")
+                        and part.inline_data
+                        and part.inline_data.data
+                    ):
                         image_id = str(uuid4())
-                        images_generated.append({"image_id": image_id, "mime_type": getattr(part.inline_data, "mime_type", "image/png")})
+                        images_generated.append(
+                            {
+                                "image_id": image_id,
+                                "mime_type": getattr(
+                                    part.inline_data, "mime_type", "image/png"
+                                ),
+                            }
+                        )
 
             if images_generated:
-                return {"status": "success", "data": images_generated, "message": f"Generated {len(images_generated)} image(s)"}
+                return {
+                    "status": "success",
+                    "data": images_generated,
+                    "message": f"Generated {len(images_generated)} image(s)",
+                }
             else:
-                return {"status": "error", "data": None, "message": "No images were generated"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": "No images were generated",
+                }
         except Exception as e:
             logger.error(f"NanoBanana image generation failed: {e}")
             return {"status": "error", "data": None, "message": str(e)}

@@ -6,7 +6,7 @@ try:
 except ImportError:
     httpx = None
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug, logger
+from omnicoreagent.core.utils import log_debug
 
 
 class SpotifyBase:
@@ -17,7 +17,9 @@ class SpotifyBase:
         timeout: int = 30,
     ):
         if httpx is None:
-            raise ImportError("`httpx` not installed. Please install using `pip install httpx`")
+            raise ImportError(
+                "`httpx` not installed. Please install using `pip install httpx`"
+            )
         self.access_token = access_token
         self.default_market = default_market
         self.timeout = timeout
@@ -63,7 +65,11 @@ class SpotifySearch(SpotifyBase):
                 "type": "object",
                 "properties": {
                     "query": {"type": "string"},
-                    "type": {"type": "string", "enum": ["track", "artist", "album", "playlist"], "default": "track"},
+                    "type": {
+                        "type": "string",
+                        "enum": ["track", "artist", "album", "playlist"],
+                        "default": "track",
+                    },
                     "max_results": {"type": "integer", "default": 10},
                     "market": {"type": "string", "default": "US"},
                 },
@@ -72,7 +78,13 @@ class SpotifySearch(SpotifyBase):
             function=self._search,
         )
 
-    def _search(self, query: str, type: str = "track", max_results: int = 10, market: Optional[str] = None) -> str:
+    def _search(
+        self,
+        query: str,
+        type: str = "track",
+        max_results: int = 10,
+        market: Optional[str] = None,
+    ) -> str:
         log_debug(f"Searching Spotify for {type}: {query}")
         params = {
             "q": query,
@@ -135,7 +147,8 @@ class SpotifySearch(SpotifyBase):
                     "track_count": p["tracks"]["total"],
                     "uri": p["uri"],
                 }
-                for p in playlists if p
+                for p in playlists
+                if p
             ]
 
         return json.dumps(data, indent=2)
@@ -149,7 +162,11 @@ class SpotifyPlay(SpotifyBase):
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "action": {"type": "string", "enum": ["play", "current"], "default": "play"},
+                    "action": {
+                        "type": "string",
+                        "enum": ["play", "current"],
+                        "default": "play",
+                    },
                     "track_uri": {"type": "string"},
                     "context_uri": {"type": "string"},
                     "device_id": {"type": "string"},
@@ -170,14 +187,17 @@ class SpotifyPlay(SpotifyBase):
             result = self._make_request("me/player/currently-playing")
             if not result or result.get("error"):
                 return json.dumps(result or {"message": "Nothing playing"})
-            
+
             item = result.get("item", {})
-            return json.dumps({
-                "is_playing": result.get("is_playing"),
-                "track": item.get("name"),
-                "artist": item.get("artists", [{}])[0].get("name"),
-                "uri": item.get("uri"),
-            }, indent=2)
+            return json.dumps(
+                {
+                    "is_playing": result.get("is_playing"),
+                    "track": item.get("name"),
+                    "artist": item.get("artists", [{}])[0].get("name"),
+                    "uri": item.get("uri"),
+                },
+                indent=2,
+            )
 
         # Play action
         log_debug(f"Starting playback: track={track_uri}, context={context_uri}")
@@ -192,7 +212,10 @@ class SpotifyPlay(SpotifyBase):
             body["context_uri"] = context_uri
 
         result = self._make_request(
-            "me/player/play", method="PUT", body=body if body else None, params=params if params else None
+            "me/player/play",
+            method="PUT",
+            body=body if body else None,
+            params=params if params else None,
         )
         return json.dumps(result, indent=2)
 
@@ -205,12 +228,20 @@ class SpotifyPlaylist(SpotifyBase):
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "action": {"type": "string", "enum": ["create", "add", "list_user"], "default": "list_user"},
+                    "action": {
+                        "type": "string",
+                        "enum": ["create", "add", "list_user"],
+                        "default": "list_user",
+                    },
                     "name": {"type": "string", "description": "For create"},
                     "description": {"type": "string", "description": "For create"},
                     "public": {"type": "boolean", "default": False},
                     "playlist_id": {"type": "string", "description": "For add"},
-                    "track_uris": {"type": "array", "items": {"type": "string"}, "description": "For create/add"},
+                    "track_uris": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "For create/add",
+                    },
                     "limit": {"type": "integer", "default": 20},
                 },
             },
@@ -230,30 +261,48 @@ class SpotifyPlaylist(SpotifyBase):
         if action == "list_user":
             result = self._make_request("me/playlists", params={"limit": limit})
             items = result.get("items", [])
-            data = [{"id": p["id"], "name": p["name"], "uri": p["uri"]} for p in items if p]
+            data = [
+                {"id": p["id"], "name": p["name"], "uri": p["uri"]} for p in items if p
+            ]
             return json.dumps(data, indent=2)
 
         elif action == "create":
-            if not name: return "Name required for create"
+            if not name:
+                return "Name required for create"
             user = self._make_request("me")
             user_id = user.get("id")
-            if not user_id: return "Failed to get user ID"
+            if not user_id:
+                return "Failed to get user ID"
 
             body = {"name": name, "description": description or "", "public": public}
-            playlist = self._make_request(f"users/{user_id}/playlists", method="POST", body=body)
-            
-            if "error" in playlist: return json.dumps(playlist)
-            
+            playlist = self._make_request(
+                f"users/{user_id}/playlists", method="POST", body=body
+            )
+
+            if "error" in playlist:
+                return json.dumps(playlist)
+
             if track_uris:
-                self._make_request(f"playlists/{playlist['id']}/tracks", method="POST", body={"uris": track_uris[:100]})
-            
-            return json.dumps({"status": "created", "id": playlist["id"], "uri": playlist["uri"]})
+                self._make_request(
+                    f"playlists/{playlist['id']}/tracks",
+                    method="POST",
+                    body={"uris": track_uris[:100]},
+                )
+
+            return json.dumps(
+                {"status": "created", "id": playlist["id"], "uri": playlist["uri"]}
+            )
 
         elif action == "add":
-            if not playlist_id or not track_uris: return "playlist_id and track_uris required"
-            result = self._make_request(f"playlists/{playlist_id}/tracks", method="POST", body={"uris": track_uris[:100]})
+            if not playlist_id or not track_uris:
+                return "playlist_id and track_uris required"
+            result = self._make_request(
+                f"playlists/{playlist_id}/tracks",
+                method="POST",
+                body={"uris": track_uris[:100]},
+            )
             return json.dumps(result)
-        
+
         return "Invalid action"
 
 
@@ -265,7 +314,11 @@ class SpotifyUser(SpotifyBase):
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "action": {"type": "string", "enum": ["profile", "top_tracks", "top_artists"], "default": "profile"},
+                    "action": {
+                        "type": "string",
+                        "enum": ["profile", "top_tracks", "top_artists"],
+                        "default": "profile",
+                    },
                     "time_range": {"type": "string", "default": "medium_term"},
                     "limit": {"type": "integer", "default": 20},
                 },
@@ -273,13 +326,17 @@ class SpotifyUser(SpotifyBase):
             function=self._user_info,
         )
 
-    def _user_info(self, action: str = "profile", time_range: str = "medium_term", limit: int = 20) -> str:
+    def _user_info(
+        self, action: str = "profile", time_range: str = "medium_term", limit: int = 20
+    ) -> str:
         if action == "profile":
             return json.dumps(self._make_request("me"), indent=2)
-        
+
         endpoint = f"me/top/{'tracks' if action == 'top_tracks' else 'artists'}"
-        result = self._make_request(endpoint, params={"time_range": time_range, "limit": limit})
-        
+        result = self._make_request(
+            endpoint, params={"time_range": time_range, "limit": limit}
+        )
+
         items = result.get("items", [])
         data = [{"id": i["id"], "name": i["name"], "uri": i["uri"]} for i in items]
         return json.dumps(data, indent=2)
@@ -310,12 +367,17 @@ class SpotifyRecommendations(SpotifyBase):
         limit: int = 20,
     ) -> str:
         params: Dict[str, Any] = {"limit": limit}
-        if seed_tracks: params["seed_tracks"] = ",".join(seed_tracks[:5])
-        if seed_artists: params["seed_artists"] = ",".join(seed_artists[:5])
-        if seed_genres: params["seed_genres"] = ",".join(seed_genres[:5])
+        if seed_tracks:
+            params["seed_tracks"] = ",".join(seed_tracks[:5])
+        if seed_artists:
+            params["seed_artists"] = ",".join(seed_artists[:5])
+        if seed_genres:
+            params["seed_genres"] = ",".join(seed_genres[:5])
 
         result = self._make_request("recommendations", params=params)
         tracks = result.get("tracks", [])
-        data = [{"name": t["name"], "artist": t["artists"][0]["name"], "uri": t["uri"]} for t in tracks]
+        data = [
+            {"name": t["name"], "artist": t["artists"][0]["name"], "uri": t["uri"]}
+            for t in tracks
+        ]
         return json.dumps(data, indent=2)
-

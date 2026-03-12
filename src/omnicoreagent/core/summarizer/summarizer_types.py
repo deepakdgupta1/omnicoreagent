@@ -4,7 +4,6 @@ Types for the summarizer engine and message lifecycle management.
 
 from enum import Enum
 from pydantic import BaseModel, Field
-from typing import Optional
 
 
 class MessageStatus(str, Enum):

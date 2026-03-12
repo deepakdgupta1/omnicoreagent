@@ -1,21 +1,21 @@
-import json
 from os import getenv
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug, logger
+from omnicoreagent.core.utils import logger
 
 try:
     from openbb import obb as openbb_app
 except ImportError:
     openbb_app = None
 
+
 class OpenBBBase:
     def __init__(
         self,
         obb: Optional[Any] = None,
         openbb_pat: Optional[str] = None,
-        provider: str = "yfinance"
+        provider: str = "yfinance",
     ):
         if openbb_app is None:
             raise ImportError(
@@ -26,11 +26,12 @@ class OpenBBBase:
         self.provider = provider
         if self.obb:
             try:
-                 pat = openbb_pat or getenv("OPENBB_PAT")
-                 if pat:
-                     self.obb.account.login(pat=pat)
+                pat = openbb_pat or getenv("OPENBB_PAT")
+                if pat:
+                    self.obb.account.login(pat=pat)
             except Exception as e:
                 logger.error(f"Error logging into OpenBB: {e}")
+
 
 class OpenBBGetStockPrice(OpenBBBase):
     def get_tool(self) -> Tool:
@@ -49,15 +50,18 @@ class OpenBBGetStockPrice(OpenBBBase):
 
     async def _get_price(self, symbol: str) -> Dict[str, Any]:
         try:
-            result = self.obb.equity.price.quote(symbol=symbol, provider=self.provider).to_polars()
+            result = self.obb.equity.price.quote(
+                symbol=symbol, provider=self.provider
+            ).to_polars()
             data = result.to_dicts()
             return {
                 "status": "success",
                 "data": data,
-                "message": f"Stock price for {symbol}"
+                "message": f"Stock price for {symbol}",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class OpenBBSearchCompany(OpenBBBase):
     def get_tool(self) -> Tool:
@@ -81,10 +85,11 @@ class OpenBBSearchCompany(OpenBBBase):
             return {
                 "status": "success",
                 "data": data,
-                "message": f"Search results for {query}"
+                "message": f"Search results for {query}",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class OpenBBGetCompanyNews(OpenBBBase):
     def get_tool(self) -> Tool:
@@ -95,7 +100,7 @@ class OpenBBGetCompanyNews(OpenBBBase):
                 "type": "object",
                 "properties": {
                     "symbol": {"type": "string"},
-                    "limit": {"type": "integer", "default": 5}
+                    "limit": {"type": "integer", "default": 5},
                 },
                 "required": ["symbol"],
             },
@@ -104,16 +109,15 @@ class OpenBBGetCompanyNews(OpenBBBase):
 
     async def _get_news(self, symbol: str, limit: int = 5) -> Dict[str, Any]:
         try:
-            result = self.obb.news.company(symbol=symbol, provider=self.provider, limit=limit).to_polars()
+            result = self.obb.news.company(
+                symbol=symbol, provider=self.provider, limit=limit
+            ).to_polars()
             data = result.to_dicts()
             # Clean images if any
-            for d in data: 
-                if 'images' in d: del d['images']
-            
-            return {
-                "status": "success",
-                "data": data,
-                "message": f"News for {symbol}"
-            }
+            for d in data:
+                if "images" in d:
+                    del d["images"]
+
+            return {"status": "success", "data": data, "message": f"News for {symbol}"}
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

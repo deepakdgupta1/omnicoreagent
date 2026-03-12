@@ -1,5 +1,5 @@
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 try:
     import httpx
@@ -19,7 +19,9 @@ class JinaReadUrl:
         timeout: Optional[int] = None,
     ):
         if httpx is None:
-            raise ImportError("`httpx` not installed. Please install using `pip install httpx`")
+            raise ImportError(
+                "`httpx` not installed. Please install using `pip install httpx`"
+            )
         self.api_key = api_key or getenv("JINA_API_KEY")
         self.base_url = base_url
         self.max_content_length = max_content_length
@@ -63,7 +65,11 @@ class JinaReadUrl:
             response.raise_for_status()
             content = response.json()
             truncated = self._truncate_content(str(content))
-            return {"status": "success", "data": truncated, "message": "URL content retrieved"}
+            return {
+                "status": "success",
+                "data": truncated,
+                "message": "URL content retrieved",
+            }
         except Exception as e:
             logger.error(f"Error reading URL: {e}")
             return {"status": "error", "data": None, "message": str(e)}
@@ -78,7 +84,9 @@ class JinaSearchQuery(JinaReadUrl):
         timeout: Optional[int] = None,
         search_query_content: bool = True,
     ):
-        super().__init__(api_key=api_key, max_content_length=max_content_length, timeout=timeout)
+        super().__init__(
+            api_key=api_key, max_content_length=max_content_length, timeout=timeout
+        )
         self.search_url = search_url
         self.search_query_content = search_query_content
 
@@ -107,7 +115,11 @@ class JinaSearchQuery(JinaReadUrl):
             response.raise_for_status()
             content = response.json()
             truncated = self._truncate_content(str(content))
-            return {"status": "success", "data": truncated, "message": "Search results retrieved"}
+            return {
+                "status": "success",
+                "data": truncated,
+                "message": "Search results retrieved",
+            }
         except Exception as e:
             logger.error(f"Error performing search: {e}")
             return {"status": "error", "data": None, "message": str(e)}

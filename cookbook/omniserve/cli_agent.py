@@ -71,7 +71,6 @@ TEST THE API
 =============================================================================
 """
 
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -90,11 +89,20 @@ tools = ToolRegistry()
 def calculate(expression: str) -> dict:
     """Evaluate a math expression like '2 + 2' or 'sqrt(16)'."""
     import math
+
     try:
-        result = eval(expression, {"__builtins__": {}}, {
-            "sqrt": math.sqrt, "sin": math.sin, "cos": math.cos,
-            "pi": math.pi, "abs": abs, "round": round,
-        })
+        result = eval(
+            expression,
+            {"__builtins__": {}},
+            {
+                "sqrt": math.sqrt,
+                "sin": math.sin,
+                "cos": math.cos,
+                "pi": math.pi,
+                "abs": abs,
+                "round": round,
+            },
+        )
         return {"expression": expression, "result": result}
     except Exception as e:
         return {"error": str(e)}
@@ -104,6 +112,7 @@ def calculate(expression: str) -> dict:
 def get_time() -> dict:
     """Get the current time."""
     from datetime import datetime
+
     now = datetime.now()
     return {
         "time": now.strftime("%H:%M:%S"),
@@ -120,7 +129,7 @@ def search_web(query: str) -> dict:
             {"title": f"Result 1 for: {query}", "url": "https://example.com/1"},
             {"title": f"Result 2 for: {query}", "url": "https://example.com/2"},
         ],
-        "note": "Demo implementation - integrate real search API"
+        "note": "Demo implementation - integrate real search API",
     }
 
 
@@ -150,7 +159,7 @@ Use tools when helpful. Be concise and clear.""",
     debug=False,
     agent_config={
         "memory_tool_backend": "local",  # Use "s3" or "r2" for cloud storage
-    }
+    },
 )
 
 

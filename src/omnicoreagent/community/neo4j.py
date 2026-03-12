@@ -1,6 +1,5 @@
-import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
 from omnicoreagent.core.utils import log_debug, logger
@@ -9,7 +8,6 @@ try:
     from neo4j import GraphDatabase
 except ImportError:
     GraphDatabase = None
-
 
 
 class Neo4jTools:
@@ -25,7 +23,9 @@ class Neo4jTools:
         password = password or os.getenv("NEO4J_PASSWORD")
 
         if GraphDatabase is None:
-            raise ImportError("`neo4j` not installed. Please install using `pip install neo4j`")
+            raise ImportError(
+                "`neo4j` not installed. Please install using `pip install neo4j`"
+            )
 
         if user is None or password is None:
             raise ValueError("Username or password for Neo4j not provided")
@@ -47,7 +47,10 @@ class Neo4jTools:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string", "description": "Cypher query to execute"},
+                    "query": {
+                        "type": "string",
+                        "description": "Cypher query to execute",
+                    },
                 },
                 "required": ["query"],
             },
@@ -60,7 +63,11 @@ class Neo4jTools:
             with self.driver.session(database=self.database) as session:
                 result = session.run(query)
                 data = result.data()
-            return {"status": "success", "data": data, "message": f"Query returned {len(data)} results"}
+            return {
+                "status": "success",
+                "data": data,
+                "message": f"Query returned {len(data)} results",
+            }
         except Exception as e:
             logger.error(f"Error running Cypher query: {e}")
             return {"status": "error", "data": None, "message": str(e)}
@@ -80,7 +87,11 @@ class Neo4jListLabels(Neo4jTools):
             with self.driver.session(database=self.database) as session:
                 result = session.run("CALL db.labels()")
                 labels = [record["label"] for record in result]
-            return {"status": "success", "data": labels, "message": f"Found {len(labels)} labels"}
+            return {
+                "status": "success",
+                "data": labels,
+                "message": f"Found {len(labels)} labels",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -99,7 +110,11 @@ class Neo4jListRelationships(Neo4jTools):
             with self.driver.session(database=self.database) as session:
                 result = session.run("CALL db.relationshipTypes()")
                 types = [record["relationshipType"] for record in result]
-            return {"status": "success", "data": types, "message": f"Found {len(types)} relationship types"}
+            return {
+                "status": "success",
+                "data": types,
+                "message": f"Found {len(types)} relationship types",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -118,6 +133,10 @@ class Neo4jGetSchema(Neo4jTools):
             with self.driver.session(database=self.database) as session:
                 result = session.run("CALL db.schema.visualization()")
                 schema_data = result.data()
-            return {"status": "success", "data": schema_data, "message": "Schema retrieved"}
+            return {
+                "status": "success",
+                "data": schema_data,
+                "message": "Schema retrieved",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

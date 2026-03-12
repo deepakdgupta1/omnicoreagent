@@ -9,10 +9,10 @@ Layer 2: Agent Loop Context (this module) - manages within a single agent.run()
 """
 
 from typing import Any, Callable, List, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
-from omnicoreagent.core.summarizer.tokenizer import count_tokens, count_message_tokens
+from omnicoreagent.core.summarizer.tokenizer import count_tokens
 from omnicoreagent.core.utils import logger
 
 

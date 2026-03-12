@@ -1,11 +1,6 @@
-import base64
-import json
-import tempfile
-import time
-from os import fdopen, getenv
+from os import getenv
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
-from uuid import uuid4
+from typing import Any, Dict, Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
 from omnicoreagent.core.utils import prepare_python_code
@@ -15,7 +10,6 @@ try:
     from e2b_code_interpreter import Sandbox
 except ImportError:
     Sandbox = None
-
 
 
 class E2BTools:
@@ -32,11 +26,15 @@ class E2BTools:
             )
         self.api_key = api_key or getenv("E2B_API_KEY")
         if not self.api_key:
-            raise ValueError("E2B_API_KEY not set. Please set the E2B_API_KEY environment variable.")
+            raise ValueError(
+                "E2B_API_KEY not set. Please set the E2B_API_KEY environment variable."
+            )
 
         self.sandbox_options = sandbox_options or {}
         try:
-            self.sandbox = Sandbox.create(api_key=self.api_key, timeout=timeout, **self.sandbox_options)
+            self.sandbox = Sandbox.create(
+                api_key=self.api_key, timeout=timeout, **self.sandbox_options
+            )
         except Exception as e:
             logger.error(f"Warning: Could not create sandbox: {e}")
             raise e
@@ -113,13 +111,19 @@ class E2BUploadFile(E2BTools):
             function=self._upload_file,
         )
 
-    async def _upload_file(self, file_path: str, sandbox_path: Optional[str] = None) -> Dict[str, Any]:
+    async def _upload_file(
+        self, file_path: str, sandbox_path: Optional[str] = None
+    ) -> Dict[str, Any]:
         try:
             if not sandbox_path:
                 sandbox_path = Path(file_path).name
             with open(file_path, "rb") as f:
                 file_in_sandbox = self.sandbox.files.write(sandbox_path, f)
-            return {"status": "success", "data": file_in_sandbox.path, "message": "File uploaded"}
+            return {
+                "status": "success",
+                "data": file_in_sandbox.path,
+                "message": "File uploaded",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -140,14 +144,20 @@ class E2BDownloadFile(E2BTools):
             function=self._download_file,
         )
 
-    async def _download_file(self, sandbox_path: str, local_path: Optional[str] = None) -> Dict[str, Any]:
+    async def _download_file(
+        self, sandbox_path: str, local_path: Optional[str] = None
+    ) -> Dict[str, Any]:
         try:
             if not local_path:
                 local_path = Path(sandbox_path).name
             content = self.sandbox.files.read(sandbox_path)
             with open(local_path, "wb") as f:
                 f.write(content)
-            return {"status": "success", "data": local_path, "message": "File downloaded"}
+            return {
+                "status": "success",
+                "data": local_path,
+                "message": "File downloaded",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -177,7 +187,9 @@ class E2BRunCommand(E2BTools):
                 output.append(f"STDERR:\n{result.stderr}")
             return {
                 "status": "success",
-                "data": "\n".join(output) if output else "Command executed with no output",
+                "data": "\n".join(output)
+                if output
+                else "Command executed with no output",
                 "message": "Command executed",
             }
         except Exception as e:
@@ -202,13 +214,21 @@ class E2BListFiles(E2BTools):
         try:
             files = self.sandbox.files.list(directory_path)
             if not files:
-                return {"status": "success", "data": [], "message": f"No files in {directory_path}"}
+                return {
+                    "status": "success",
+                    "data": [],
+                    "message": f"No files in {directory_path}",
+                }
             result = []
             for f in files:
                 file_type = "Directory" if f.type == "directory" else "File"
                 size = f"{f.size} bytes" if f.size is not None else "Unknown"
                 result.append({"name": f.name, "type": file_type, "size": size})
-            return {"status": "success", "data": result, "message": f"Contents of {directory_path}"}
+            return {
+                "status": "success",
+                "data": result,
+                "message": f"Contents of {directory_path}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -235,8 +255,16 @@ class E2BReadFile(E2BTools):
                 try:
                     content = content.decode("utf-8")
                 except UnicodeDecodeError:
-                    return {"status": "success", "data": f"Binary data ({len(content)} bytes)", "message": "File read"}
-            return {"status": "success", "data": content, "message": "File read successfully"}
+                    return {
+                        "status": "success",
+                        "data": f"Binary data ({len(content)} bytes)",
+                        "message": "File read",
+                    }
+            return {
+                "status": "success",
+                "data": content,
+                "message": "File read successfully",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -261,7 +289,11 @@ class E2BWriteFile(E2BTools):
         try:
             bytes_content = content.encode("utf-8")
             file_info = self.sandbox.files.write(file_path, bytes_content)
-            return {"status": "success", "data": file_info.path, "message": "File written"}
+            return {
+                "status": "success",
+                "data": file_info.path,
+                "message": "File written",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -278,7 +310,11 @@ class E2BGetSandboxStatus(E2BTools):
     async def _get_status(self) -> Dict[str, Any]:
         try:
             sandbox_id = getattr(self.sandbox, "id", "Unknown")
-            return {"status": "success", "data": {"sandbox_id": sandbox_id}, "message": "Sandbox status"}
+            return {
+                "status": "success",
+                "data": {"sandbox_id": sandbox_id},
+                "message": "Sandbox status",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 

@@ -1,9 +1,8 @@
-import json
 from os import getenv
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug, log_error, log_warning
+from omnicoreagent.core.utils import log_debug, log_error
 
 try:
     from mem0.client.main import MemoryClient
@@ -11,7 +10,6 @@ try:
 except ImportError:
     MemoryClient = None
     Memory = None
-
 
 
 class Mem0Tools:
@@ -32,7 +30,9 @@ class Mem0Tools:
         self.infer = infer
 
         if MemoryClient is None:
-            raise ImportError("`mem0ai` not installed. Please install using `pip install mem0ai`")
+            raise ImportError(
+                "`mem0ai` not installed. Please install using `pip install mem0ai`"
+            )
 
         try:
             if self.api_key:
@@ -60,21 +60,31 @@ class Mem0Tools:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "content": {"type": "string", "description": "Facts to store in memory"},
-                    "user_id": {"type": "string", "description": "User ID (optional, uses default)"},
+                    "content": {
+                        "type": "string",
+                        "description": "Facts to store in memory",
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "description": "User ID (optional, uses default)",
+                    },
                 },
                 "required": ["content"],
             },
             function=self._add_memory,
         )
 
-    async def _add_memory(self, content: str, user_id: Optional[str] = None) -> Dict[str, Any]:
+    async def _add_memory(
+        self, content: str, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         resolved_user_id = user_id or self.user_id
         if not resolved_user_id:
             return {"status": "error", "data": None, "message": "user_id is required"}
         try:
             messages_list = [{"role": "user", "content": content}]
-            result = self.client.add(messages_list, user_id=resolved_user_id, infer=self.infer)
+            result = self.client.add(
+                messages_list, user_id=resolved_user_id, infer=self.infer
+            )
             return {"status": "success", "data": result, "message": "Memory added"}
         except Exception as e:
             log_error(f"Error adding memory: {e}")
@@ -97,7 +107,9 @@ class Mem0SearchMemory(Mem0Tools):
             function=self._search_memory,
         )
 
-    async def _search_memory(self, query: str, user_id: Optional[str] = None) -> Dict[str, Any]:
+    async def _search_memory(
+        self, query: str, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         resolved_user_id = user_id or self.user_id
         if not resolved_user_id:
             return {"status": "error", "data": None, "message": "user_id is required"}
@@ -109,7 +121,11 @@ class Mem0SearchMemory(Mem0Tools):
                 search_results = results
             else:
                 search_results = []
-            return {"status": "success", "data": search_results, "message": f"Found {len(search_results)} memories"}
+            return {
+                "status": "success",
+                "data": search_results,
+                "message": f"Found {len(search_results)} memories",
+            }
         except Exception as e:
             log_error(f"Error searching memory: {e}")
             return {"status": "error", "data": None, "message": str(e)}
@@ -141,7 +157,11 @@ class Mem0GetAllMemories(Mem0Tools):
                 memories = results
             else:
                 memories = []
-            return {"status": "success", "data": memories, "message": f"Found {len(memories)} memories"}
+            return {
+                "status": "success",
+                "data": memories,
+                "message": f"Found {len(memories)} memories",
+            }
         except Exception as e:
             log_error(f"Error getting memories: {e}")
             return {"status": "error", "data": None, "message": str(e)}
@@ -161,13 +181,19 @@ class Mem0DeleteAllMemories(Mem0Tools):
             function=self._delete_all_memories,
         )
 
-    async def _delete_all_memories(self, user_id: Optional[str] = None) -> Dict[str, Any]:
+    async def _delete_all_memories(
+        self, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         resolved_user_id = user_id or self.user_id
         if not resolved_user_id:
             return {"status": "error", "data": None, "message": "user_id is required"}
         try:
             self.client.delete_all(user_id=resolved_user_id)
-            return {"status": "success", "data": None, "message": f"Deleted all memories for {resolved_user_id}"}
+            return {
+                "status": "success",
+                "data": None,
+                "message": f"Deleted all memories for {resolved_user_id}",
+            }
         except Exception as e:
             log_error(f"Error deleting memories: {e}")
             return {"status": "error", "data": None, "message": str(e)}

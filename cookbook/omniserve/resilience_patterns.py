@@ -32,7 +32,6 @@ Production resilience patterns for AI agent APIs:
 =============================================================================
 """
 
-import asyncio
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -59,11 +58,11 @@ from omnicoreagent import (
 
 # Configure retry behavior
 retry_config = RetryConfig(
-    max_retries=3,               # Try up to 3 times
-    base_delay=1.0,              # Start with 1 second delay
-    max_delay=30.0,              # Cap delay at 30 seconds
+    max_retries=3,  # Try up to 3 times
+    base_delay=1.0,  # Start with 1 second delay
+    max_delay=30.0,  # Cap delay at 30 seconds
     strategy=RetryStrategy.EXPONENTIAL,  # Exponential backoff
-    jitter=True,                 # Add randomness to prevent thundering herd
+    jitter=True,  # Add randomness to prevent thundering herd
 )
 
 
@@ -71,11 +70,12 @@ retry_config = RetryConfig(
 async def call_external_api(url: str) -> dict:
     """
     Example: External API call with automatic retry.
-    
+
     If this function raises an exception, it will be retried
     up to 3 times with exponential backoff.
     """
     import httpx
+
     async with httpx.AsyncClient() as client:
         response = await client.get(url, timeout=10)
         return response.json()
@@ -85,24 +85,26 @@ async def call_external_api(url: str) -> dict:
 # EXAMPLE 2: RETRY WITH FUNCTION (more control)
 # =============================================================================
 
+
 async def call_llm_with_retry(prompt: str) -> str:
     """
     Example: LLM call with retry using the function directly.
-    
+
     This gives more control over the retry behavior.
     """
+
     async def _call():
         # Your LLM API call here
         # This is a placeholder
         return f"Response to: {prompt}"
-    
+
     return await retry_async(
         _call,
         config=RetryConfig(
             max_retries=5,
             base_delay=0.5,
             strategy=RetryStrategy.EXPONENTIAL,
-        )
+        ),
     )
 
 
@@ -112,9 +114,9 @@ async def call_llm_with_retry(prompt: str) -> str:
 
 # Configure circuit breaker
 circuit_config = CircuitBreakerConfig(
-    failure_threshold=5,     # Open after 5 consecutive failures
-    success_threshold=2,     # Close after 2 successes in half-open state
-    timeout=60.0,            # Stay open for 60 seconds before trying again
+    failure_threshold=5,  # Open after 5 consecutive failures
+    success_threshold=2,  # Close after 2 successes in half-open state
+    timeout=60.0,  # Stay open for 60 seconds before trying again
 )
 
 # Create circuit breaker instance
@@ -137,7 +139,7 @@ external_api_circuit = CircuitBreaker(
 async def call_with_circuit_breaker() -> dict:
     """
     Example: Protected call using circuit breaker.
-    
+
     States:
     - CLOSED: Normal operation, calls go through
     - OPEN: Too many failures, calls fail immediately
@@ -155,7 +157,7 @@ async def call_with_circuit_breaker_fallback() -> dict:
     Example: Circuit breaker with fallback logic.
     """
     from omnicoreagent.omni_agent.omni_serve.resilience import CircuitBreakerOpenError
-    
+
     try:
         async with external_api_circuit:
             # Risky call
@@ -169,17 +171,18 @@ async def call_with_circuit_breaker_fallback() -> dict:
 # EXAMPLE 4: COMBINING RETRY + CIRCUIT BREAKER
 # =============================================================================
 
+
 async def robust_api_call(url: str) -> dict:
     """
     Example: Full production pattern - retry inside circuit breaker.
-    
+
     The circuit breaker wraps the retry logic:
     - If the circuit is open, we fail fast (no retries)
     - If the circuit is closed, we retry on failures
     - If retries exhaust, that counts as a circuit failure
     """
     from omnicoreagent.omni_agent.omni_serve.resilience import CircuitBreakerOpenError
-    
+
     try:
         async with external_api_circuit:
             # Retry inside the circuit breaker
@@ -194,6 +197,7 @@ async def robust_api_call(url: str) -> dict:
 async def _make_request(url: str) -> dict:
     """Internal helper for making the actual request."""
     import httpx
+
     async with httpx.AsyncClient() as client:
         response = await client.get(url, timeout=10)
         return response.json()
@@ -203,19 +207,20 @@ async def _make_request(url: str) -> dict:
 # EXAMPLE 5: USING METRICS
 # =============================================================================
 
+
 def demonstrate_metrics():
     """
     Example: Accessing and recording custom metrics.
     """
     metrics = get_metrics()
-    
+
     # Record custom metrics
     metrics.increment("custom_api_calls")
     metrics.increment("custom_api_calls", 5)  # Increment by 5
-    
+
     # Record timing
     metrics.observe("custom_latency", 0.123)  # 123ms
-    
+
     # View current metrics
     print("Current metrics:")
     print(f"  Counters: {dict(metrics.counters)}")
@@ -233,7 +238,7 @@ tools = ToolRegistry()
 async def fetch_data(source: str) -> dict:
     """
     Fetch data from an external source with resilience.
-    
+
     This tool demonstrates using retry and circuit breaker
     for reliable external API calls.
     """
@@ -260,7 +265,7 @@ async def _fetch_from_source(source: str) -> str:
 agent = OmniCoreAgent(
     name="ResilientAgent",
     system_instruction="""You are an AI assistant with resilient external integrations.
-    
+
 Available tools:
 - fetch_data(source): Fetch data with automatic retry and circuit breaker protection
 
@@ -301,7 +306,9 @@ if __name__ == "__main__":
     print()
     print("  CIRCUIT BREAKER:")
     print("    from omnicoreagent import CircuitBreaker, CircuitBreakerConfig")
-    print("    breaker = CircuitBreaker('api', CircuitBreakerConfig(failure_threshold=5))")
+    print(
+        "    breaker = CircuitBreaker('api', CircuitBreakerConfig(failure_threshold=5))"
+    )
     print("    async with breaker:")
     print("        result = await risky_call()")
     print()
@@ -311,19 +318,19 @@ if __name__ == "__main__":
     print("    metrics.increment('my_counter')")
     print()
     print("-" * 70)
-    
+
     # Demo metrics
     demonstrate_metrics()
-    
+
     print("-" * 70)
     print()
     print("Starting server...")
     print(f"  Server:     http://localhost:{config.port}")
-    print(f"  Auth Token: resilience-demo")
+    print("  Auth Token: resilience-demo")
     print()
     print("=" * 70)
     print()
-    
+
     server = OmniServe(
         agent=agent,
         config=config,

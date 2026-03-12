@@ -1,13 +1,13 @@
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug, log_info, logger
+from omnicoreagent.core.utils import log_info, logger
 
 try:
     import duckdb
 except ImportError:
     duckdb = None
+
 
 class DuckDbBase:
     def __init__(
@@ -16,7 +16,7 @@ class DuckDbBase:
         connection: Optional[Any] = None,
         read_only: bool = False,
         config: Optional[dict] = None,
-        init_commands: Optional[List[str]] = None
+        init_commands: Optional[List[str]] = None,
     ):
         if duckdb is None:
             raise ImportError(
@@ -47,8 +47,9 @@ class DuckDbBase:
             except Exception as e:
                 logger.exception(e)
                 logger.warning("Failed to run duckdb init commands")
-                
+
         return self._connection
+
 
 class DuckDbShowTables(DuckDbBase):
     def get_tool(self) -> Tool:
@@ -67,9 +68,14 @@ class DuckDbShowTables(DuckDbBase):
             stmt = "SHOW TABLES;"
             result = self.connection.sql(stmt).fetchall()
             tables = [r[0] for r in result]
-            return {"status": "success", "data": tables, "message": f"Tables: {', '.join(tables)}"}
+            return {
+                "status": "success",
+                "data": tables,
+                "message": f"Tables: {', '.join(tables)}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class DuckDbRunQuery(DuckDbBase):
     def get_tool(self) -> Tool:
@@ -91,24 +97,37 @@ class DuckDbRunQuery(DuckDbBase):
             # Simple sanitization
             formatted_sql = query.replace("`", "").split(";")[0]
             log_info(f"Running: {formatted_sql}")
-            
+
             query_result = self.connection.sql(formatted_sql)
-            
+
             if query_result is None:
-                return {"status": "success", "data": None, "message": "Query executed with no output"}
+                return {
+                    "status": "success",
+                    "data": None,
+                    "message": "Query executed with no output",
+                }
 
             try:
                 # Try to get column names and rows
                 columns = query_result.columns
                 rows = query_result.fetchall()
                 data = [dict(zip(columns, row)) for row in rows]
-                return {"status": "success", "data": data, "message": f"Returned {len(data)} rows"}
+                return {
+                    "status": "success",
+                    "data": data,
+                    "message": f"Returned {len(data)} rows",
+                }
             except AttributeError:
                 # Fallback for non-select queries that might return simple status
-                return {"status": "success", "data": str(query_result), "message": "Query executed"}
+                return {
+                    "status": "success",
+                    "data": str(query_result),
+                    "message": "Query executed",
+                }
 
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class DuckDbDescribeTable(DuckDbBase):
     def get_tool(self) -> Tool:
@@ -128,6 +147,10 @@ class DuckDbDescribeTable(DuckDbBase):
     async def _describe(self, table: str) -> Dict[str, Any]:
         try:
             result = self.connection.sql(f"DESCRIBE {table};").fetchall()
-            return {"status": "success", "data": str(result), "message": f"Description for {table}"}
+            return {
+                "status": "success",
+                "data": str(result),
+                "message": f"Description for {table}",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

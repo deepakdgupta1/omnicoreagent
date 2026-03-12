@@ -9,9 +9,7 @@ This example demonstrates DeepAgent with local tools for:
 Run: python cookbook/deep_agent/upwork_proposal_writer.py
 """
 
-from doctest import debug
 import asyncio
-import os
 from datetime import datetime
 from typing import Dict, List, Any
 
@@ -344,22 +342,22 @@ You have tools to:
 
     # Sample job posting
     job_posting = """
-    Looking for experienced Python developer to build an AI-powered 
+    Looking for experienced Python developer to build an AI-powered
     document processing system.
-    
+
     Requirements:
     - Strong Python experience (5+ years)
     - Experience with Machine Learning and NLP
     - API development (FastAPI or Flask)
     - Database experience (PostgreSQL preferred)
     - Good communication skills
-    
+
     Project: We need to process thousands of legal documents daily,
     extract key information, and classify them automatically.
-    
+
     Budget: $5,000-10,000 fixed price
     Timeline: 4-6 weeks
-    
+
     Please include:
     - Relevant experience with similar projects
     - Your approach to this project
@@ -374,9 +372,9 @@ You have tools to:
 
     result = await agent.run(f"""
     Write a winning Upwork proposal for this job posting:
-    
+
     {job_posting}
-    
+
     Use the available tools to:
     1. Analyze the job posting
     2. Get the freelancer profile
@@ -384,7 +382,7 @@ You have tools to:
     4. Generate optimal proposal structure
     5. Write the proposal
     6. Save the proposal
-    
+
     Make the proposal specific, compelling, and professional.
     """)
 

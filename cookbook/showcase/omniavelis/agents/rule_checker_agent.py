@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from datetime import datetime, timezone
 import time
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 from omnicoreagent import ToolRegistry, MemoryRouter, OmniCoreAgent, EventRouter
 from agents.system_prompts import rule_checker_agent_prompt

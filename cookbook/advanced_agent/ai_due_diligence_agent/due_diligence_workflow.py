@@ -30,13 +30,11 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Optional
 
 from dotenv import load_dotenv
 
 from omnicoreagent import (
     OmniCoreAgent,
-    ToolRegistry,
 )
 
 # Import the granular tool factories
@@ -245,11 +243,11 @@ You are a financial analyst specializing in startup valuation.
 Create a 5-year revenue projection model based on the Company and Market research.
 
 **MODELING GUIDELINES:**
-1. **Estimate Current ARR**: 
+1. **Estimate Current ARR**:
    - Seed stage: $0.1-0.5M ARR
    - Series A: $1-3M ARR
    - Series B: $5-15M ARR
-   
+
 2. **Define Three Growth Scenarios** (YoY Multipliers):
    - **Bear Case**: Conservative growth (e.g., 1.2, 1.15, 1.1, 1.1, 1.1)
    - **Base Case**: Realistic growth (e.g., 1.8, 1.6, 1.4, 1.3, 1.25)

@@ -23,7 +23,6 @@ Then test the endpoints:
 Visit http://localhost:8000/docs for the interactive Swagger UI.
 """
 
-import os
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -38,9 +37,9 @@ def main():
     # Create the DeepAgent
     agent = DeepAgent(
         name="ResearchAgent",
-        system_instruction="""You are a research assistant with multi-agent 
-        orchestration capabilities. You can spawn subagents to help with 
-        complex research tasks. Break down problems into subtasks and 
+        system_instruction="""You are a research assistant with multi-agent
+        orchestration capabilities. You can spawn subagents to help with
+        complex research tasks. Break down problems into subtasks and
         coordinate their execution.""",
         model_config={
             "provider": "gemini",

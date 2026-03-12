@@ -8,7 +8,7 @@ import sys
 import uuid
 from collections import defaultdict, deque
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional
 from dataclasses import dataclass
 from types import SimpleNamespace
 from rich.console import Console, Group
@@ -873,57 +873,61 @@ except ImportError:
 
     logger.debug("Opik not available, using no-op decorator")
 
+
 def get_json_schema(f) -> dict:
     """
     Generate a JSON schema for the arguments of a function.
     """
     import inspect
     from pydantic import TypeAdapter
-    
+
     sig = inspect.signature(f)
     properties = {}
     required = []
-    
+
     for name, param in sig.parameters.items():
         if name == "self":
             continue
-        
+
         annotation = param.annotation
         if annotation == inspect.Parameter.empty:
             annotation = str
-            
+
         try:
             schema = TypeAdapter(annotation).json_schema()
         except:
-             schema = {"type": "string"}
+            schema = {"type": "string"}
 
         properties[name] = schema
-        
+
         if param.default == inspect.Parameter.empty:
             required.append(name)
-            
-    return {
-        "type": "object",
-        "properties": properties,
-        "required": required
-    }
+
+    return {"type": "object", "properties": properties, "required": required}
+
 
 # --- SHIM FUNCTIONS RESTORED ---
+
 
 def log_debug(msg, *args, **kwargs):
     logger.debug(msg, *args, **kwargs)
 
+
 def log_info(msg, *args, **kwargs):
     logger.info(msg, *args, **kwargs)
+
 
 def log_warning(msg, *args, **kwargs):
     logger.warning(msg, *args, **kwargs)
 
+
 def log_error(msg, *args, **kwargs):
     logger.error(msg, *args, **kwargs)
 
+
 def log_exception(msg, *args, **kwargs):
     logger.exception(msg, *args, **kwargs)
+
 
 @dataclass
 class Audio:
@@ -931,6 +935,7 @@ class Audio:
     url: Optional[str] = None
     format: str = "mp3"
     metadata: Optional[Any] = None
+
 
 @dataclass
 class Image:
@@ -940,12 +945,14 @@ class Image:
     prompt: Optional[str] = None
     metadata: Optional[Any] = None
 
+
 @dataclass
 class Video:
     content: Optional[bytes] = None
     url: Optional[str] = None
     format: str = "mp4"
     metadata: Optional[Any] = None
+
 
 @dataclass
 class File:
@@ -959,11 +966,14 @@ class File:
     url: Optional[str] = None
     metadata: Optional[Any] = None
 
+
 def get_entrypoint_for_tool(tool):
     return None
 
+
 def prepare_command(command):
     return command
+
 
 def prepare_python_code(code: str) -> str:
     """Expires markdown code blocks from a string."""

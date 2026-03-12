@@ -15,8 +15,6 @@ from typing import Optional
 
 import click
 
-from omnicoreagent.core.utils import logger
-
 
 def _load_agent_from_file(path: str):
     """
@@ -51,7 +49,7 @@ def _load_agent_from_file(path: str):
         return module.create_agent()
     else:
         raise click.ClickException(
-            f"Agent file must define an 'agent' variable or 'create_agent()' function"
+            "Agent file must define an 'agent' variable or 'create_agent()' function"
         )
 
 
@@ -67,18 +65,23 @@ def cli():
 
 @cli.command()
 @click.option(
-    "--agent", "-a",
+    "--agent",
+    "-a",
     type=click.Path(exists=True),
     help="Path to Python file containing the agent",
 )
 @click.option("--host", "-h", default=None, help="Host to bind to (default: 0.0.0.0)")
-@click.option("--port", "-p", default=None, type=int, help="Port to bind to (default: 8000)")
+@click.option(
+    "--port", "-p", default=None, type=int, help="Port to bind to (default: 8000)"
+)
 @click.option("--workers", "-w", default=1, type=int, help="Number of workers")
 @click.option("--reload", is_flag=True, help="Enable auto-reload for development")
 @click.option("--no-docs", is_flag=True, help="Disable Swagger UI")
 @click.option("--cors-origins", default="*", help="Comma-separated CORS origins")
 @click.option("--auth-token", default=None, help="Enable auth with this token")
-@click.option("--rate-limit", default=None, type=int, help="Rate limit (requests per minute)")
+@click.option(
+    "--rate-limit", default=None, type=int, help="Rate limit (requests per minute)"
+)
 def run(
     agent: Optional[str],
     host: Optional[str],
@@ -133,11 +136,17 @@ def run(
     click.echo(f"Metrics: http://{config.host}:{config.port}/prometheus")
     click.echo("")
     click.echo("Features Enabled:")
-    click.echo(f"  • Auth: {'✓ (Bearer token)' if config.auth_enabled else '✗ (use --auth-token to enable)'}")
-    click.echo(f"  • Rate Limit: {'✓ ' + str(config.rate_limit_requests) + '/min' if config.rate_limit_enabled else '✗ (use --rate-limit N to enable)'}")
+    click.echo(
+        f"  • Auth: {'✓ (Bearer token)' if config.auth_enabled else '✗ (use --auth-token to enable)'}"
+    )
+    click.echo(
+        f"  • Rate Limit: {'✓ ' + str(config.rate_limit_requests) + '/min' if config.rate_limit_enabled else '✗ (use --rate-limit N to enable)'}"
+    )
     click.echo(f"  • CORS: {config.cors_origins}")
     click.echo("")
-    click.echo("💡 Available options: --auth-token, --rate-limit, --cors-origins, --no-docs, --reload")
+    click.echo(
+        "💡 Available options: --auth-token, --rate-limit, --cors-origins, --no-docs, --reload"
+    )
     click.echo("   Run 'omniserve run --help' for all options")
     click.echo("=" * 50)
     click.echo("")
@@ -147,10 +156,20 @@ def run(
 
 
 @cli.command()
-@click.option("--provider", "-p", default="gemini", help="LLM provider (openai, gemini, anthropic)")
+@click.option(
+    "--provider",
+    "-p",
+    default="gemini",
+    help="LLM provider (openai, gemini, anthropic)",
+)
 @click.option("--model", "-m", default="gemini-2.0-flash", help="Model name")
 @click.option("--name", "-n", default="QuickAgent", help="Agent name")
-@click.option("--instruction", "-i", default="You are a helpful AI assistant.", help="System instruction")
+@click.option(
+    "--instruction",
+    "-i",
+    default="You are a helpful AI assistant.",
+    help="System instruction",
+)
 @click.option("--port", default=8000, type=int, help="Port to bind to")
 @click.option("--host", default="0.0.0.0", help="Host to bind to")
 def quickstart(
@@ -208,7 +227,7 @@ def quickstart(
     click.echo("=" * 50)
     click.echo("")
     click.echo("Test with:")
-    click.echo(f'  curl -X POST http://{host}:{port}/run/sync \\')
+    click.echo(f"  curl -X POST http://{host}:{port}/run/sync \\")
     click.echo('    -H "Content-Type: application/json" \\')
     click.echo('    -d \'{"query": "Hello!"}\'')
     click.echo("")
@@ -218,7 +237,9 @@ def quickstart(
 
 
 @cli.command("config")
-@click.option("--show", is_flag=True, help="Show current configuration from environment")
+@click.option(
+    "--show", is_flag=True, help="Show current configuration from environment"
+)
 @click.option("--env-example", is_flag=True, help="Print example .env file")
 def config_cmd(show: bool, env_example: bool):
     """View or generate configuration.
@@ -281,35 +302,46 @@ OMNISERVE_REQUEST_TIMEOUT=300
 
 
 @cli.command("generate-dockerfile")
-@click.option("--file", "-f", "file_path", type=click.Path(exists=True), help="Path to your agent Python file")
-@click.option("--output-dir", "-o", default=".", help="Output directory for generated files")
+@click.option(
+    "--file",
+    "-f",
+    "file_path",
+    type=click.Path(exists=True),
+    help="Path to your agent Python file",
+)
+@click.option(
+    "--output-dir", "-o", default=".", help="Output directory for generated files"
+)
 def generate_dockerfile(file_path: str, output_dir: str):
     """Generate a Dockerfile for deploying your agent.
-    
+
     Works both locally and on cloud platforms (Cloud Run, AWS Fargate, Railway).
     - Copies all files into the image
     - Uses environment variables for configuration
-    
+
     Example:
         omniserve generate-dockerfile --file my_agent.py
     """
     from rich.console import Console
-    from rich.prompt import Confirm
-    
+
     console = Console()
     console.print("[bold blue]🚀 OmniServe Cloud Deployment Generator[/bold blue]")
-    console.print("Generates a cloud-ready Dockerfile for Cloud Run, AWS Fargate, Railway.\n")
-    
+    console.print(
+        "Generates a cloud-ready Dockerfile for Cloud Run, AWS Fargate, Railway.\n"
+    )
+
     if not file_path:
-        console.print("[bold red]Error:[/bold red] Please specify agent file with --file")
+        console.print(
+            "[bold red]Error:[/bold red] Please specify agent file with --file"
+        )
         return
-    
+
     # Calculate relative path from project root to agent
     try:
         rel_path = os.path.relpath(Path(file_path).resolve(), Path.cwd())
     except ValueError:
         rel_path = os.path.basename(file_path)
-    
+
     # Inspect agent to detect memory backend
     memory_backend = None  # None means no memory tools detected
     try:
@@ -323,10 +355,10 @@ def generate_dockerfile(file_path: str, output_dir: str):
             console.print("[dim]No memory tools configured[/dim]")
     except Exception as e:
         console.print(f"[yellow]Warning: Could not inspect agent ({e})[/yellow]")
-    
+
     out_path = Path(output_dir)
     out_path.mkdir(exist_ok=True)
-    
+
     # Build Dockerfile content
     # Only non-sensitive defaults go in Dockerfile
     # Secrets (API keys, S3/R2 creds) are passed at runtime with -e
@@ -338,19 +370,21 @@ def generate_dockerfile(file_path: str, output_dir: str):
         "ENV OMNICOREAGENT_WORKSPACE_DIR=/tmp/workspace",
         "ENV OMNICOREAGENT_ARTIFACTS_DIR=/tmp/workspace/artifacts",
     ]
-    
+
     # Only local memory needs /tmp path in Dockerfile
     if memory_backend == "local":
-        env_lines.extend([
-            "",
-            "# Local memory (ephemeral on cloud)",
-            "ENV OMNICOREAGENT_MEMORY_DIR=/tmp/workspace/memories",
-        ])
+        env_lines.extend(
+            [
+                "",
+                "# Local memory (ephemeral on cloud)",
+                "ENV OMNICOREAGENT_MEMORY_DIR=/tmp/workspace/memories",
+            ]
+        )
     # S3/R2 credentials are passed at runtime, not in Dockerfile
-    
+
     env_block = "\n".join(env_lines)
-    
-    dockerfile_content = f'''FROM python:3.12-slim
+
+    dockerfile_content = f"""FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -365,19 +399,19 @@ COPY . /app
 EXPOSE 8000
 
 CMD ["sh", "-c", "omniserve run --agent $AGENT_PATH"]
-'''
-    
+"""
+
     dockerfile_path = out_path / "Dockerfile"
     with open(dockerfile_path, "w") as f:
         f.write(dockerfile_content)
-    
+
     console.print(f"\n[bold green]✓ Generated {dockerfile_path}[/bold green]")
-    
+
     # Build the docker run command based on backend
     console.print("\n[bold]Next Steps:[/bold]")
     console.print("1. Build the image:")
     console.print("   docker build -t omniserver .")
-    
+
     console.print("\n2. Run (pass secrets at runtime):")
     if memory_backend == "s3":
         console.print("   docker run -p 8000:8000 \\")
@@ -396,17 +430,22 @@ CMD ["sh", "-c", "omniserve run --agent $AGENT_PATH"]
         console.print("     -e R2_SECRET_ACCESS_KEY=... \\")
         console.print("     omniserver")
     else:
-        console.print("   docker run -p 8000:8000 -e LLM_API_KEY=$LLM_API_KEY omniserver")
-    
+        console.print(
+            "   docker run -p 8000:8000 -e LLM_API_KEY=$LLM_API_KEY omniserver"
+        )
+
     if memory_backend == "local":
-        console.print("\n[yellow]⚠ Local memory is EPHEMERAL - data lost on restart.[/yellow]")
-        console.print("[dim]For persistent memory, configure S3 or R2 in your agent.[/dim]")
+        console.print(
+            "\n[yellow]⚠ Local memory is EPHEMERAL - data lost on restart.[/yellow]"
+        )
+        console.print(
+            "[dim]For persistent memory, configure S3 or R2 in your agent.[/dim]"
+        )
 
 
 def main():
     """Entry point for the CLI."""
     cli()
-
 
 
 if __name__ == "__main__":

@@ -1,7 +1,5 @@
 """Google Maps Tools - Search, directions, geocoding, and more."""
 
-import json
-from datetime import datetime
 from os import getenv
 from typing import Any, Dict, List, Optional
 
@@ -21,7 +19,9 @@ class GoogleMapTools:
         if not self.api_key:
             raise ValueError("GOOGLE_MAPS_API_KEY is not set.")
         if googlemaps is None:
-            raise ImportError("googlemaps not installed. pip install googlemaps google-maps-places")
+            raise ImportError(
+                "googlemaps not installed. pip install googlemaps google-maps-places"
+            )
         self.client = googlemaps.Client(key=self.api_key)
         self.places_client = places_v1.PlacesClient() if places_v1 else None
 
@@ -32,7 +32,10 @@ class GoogleMapTools:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string", "description": "Search query (e.g., 'restaurants in NYC')"},
+                    "query": {
+                        "type": "string",
+                        "description": "Search query (e.g., 'restaurants in NYC')",
+                    },
                 },
                 "required": ["query"],
             },
@@ -41,7 +44,11 @@ class GoogleMapTools:
 
     async def _search_places(self, query: str) -> Dict[str, Any]:
         if not self.places_client:
-            return {"status": "error", "data": None, "message": "google-maps-places not installed"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "google-maps-places not installed",
+            }
         try:
             request = places_v1.SearchTextRequest(text_query=query)
             response = self.places_client.search_text(
@@ -58,7 +65,11 @@ class GoogleMapTools:
                     "website": place.website_uri,
                 }
                 places.append(place_info)
-            return {"status": "success", "data": places, "message": f"Found {len(places)} places"}
+            return {
+                "status": "success",
+                "data": places,
+                "message": f"Found {len(places)} places",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -73,17 +84,27 @@ class GoogleMapsDirections(GoogleMapTools):
                 "properties": {
                     "origin": {"type": "string"},
                     "destination": {"type": "string"},
-                    "mode": {"type": "string", "enum": ["driving", "walking", "bicycling", "transit"], "default": "driving"},
+                    "mode": {
+                        "type": "string",
+                        "enum": ["driving", "walking", "bicycling", "transit"],
+                        "default": "driving",
+                    },
                 },
                 "required": ["origin", "destination"],
             },
             function=self._get_directions,
         )
 
-    async def _get_directions(self, origin: str, destination: str, mode: str = "driving") -> Dict[str, Any]:
+    async def _get_directions(
+        self, origin: str, destination: str, mode: str = "driving"
+    ) -> Dict[str, Any]:
         try:
             result = self.client.directions(origin, destination, mode=mode)
-            return {"status": "success", "data": result, "message": "Directions retrieved"}
+            return {
+                "status": "success",
+                "data": result,
+                "message": "Directions retrieved",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -106,7 +127,11 @@ class GoogleMapsGeocode(GoogleMapTools):
     async def _geocode(self, address: str) -> Dict[str, Any]:
         try:
             result = self.client.geocode(address)
-            return {"status": "success", "data": result, "message": "Geocoded successfully"}
+            return {
+                "status": "success",
+                "data": result,
+                "message": "Geocoded successfully",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -152,9 +177,15 @@ class GoogleMapsDistanceMatrix(GoogleMapTools):
             function=self._distance_matrix,
         )
 
-    async def _distance_matrix(self, origins: List[str], destinations: List[str], mode: str = "driving") -> Dict[str, Any]:
+    async def _distance_matrix(
+        self, origins: List[str], destinations: List[str], mode: str = "driving"
+    ) -> Dict[str, Any]:
         try:
             result = self.client.distance_matrix(origins, destinations, mode=mode)
-            return {"status": "success", "data": result, "message": "Distance matrix calculated"}
+            return {
+                "status": "success",
+                "data": result,
+                "message": "Distance matrix calculated",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

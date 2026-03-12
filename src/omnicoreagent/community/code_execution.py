@@ -1,13 +1,14 @@
 import subprocess
-import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from omnicoreagent.core.tools.local_tools_registry import Tool
+
 
 class LocalPython:
     """
     Executes Python code locally.
     WARNING: This executes code directly on the host machine. Use with caution.
     """
+
     def __init__(self):
         pass
 
@@ -22,32 +23,30 @@ class LocalPython:
                 ["python3", "-c", code],
                 capture_output=True,
                 text=True,
-                timeout=30 # 30 seconds timeout
+                timeout=30,  # 30 seconds timeout
             )
-            
+
             output = ""
             if result.stdout:
                 output += f"STDOUT:\n{result.stdout}\n"
             if result.stderr:
                 output += f"STDERR:\n{result.stderr}\n"
-            
+
             return {
                 "status": "success",
-                "data": output if output else "Code executed successfully with no output.",
-                "message": "Execution complete"
+                "data": output
+                if output
+                else "Code executed successfully with no output.",
+                "message": "Execution complete",
             }
 
         except subprocess.TimeoutExpired:
-            return {
-                "status": "error",
-                "data": None,
-                "message": "Execution timed out."
-            }
+            return {"status": "error", "data": None, "message": "Execution timed out."}
         except Exception as e:
             return {
                 "status": "error",
                 "data": None,
-                "message": f"Execution error: {str(e)}"
+                "message": f"Execution error: {str(e)}",
             }
 
     def get_tool(self) -> Tool:
@@ -67,11 +66,13 @@ class LocalPython:
             function=self._execute,
         )
 
+
 class LocalBash:
     """
     Executes Bash commands locally.
     WARNING: This executes commands directly on the host machine. Use with caution.
     """
+
     def __init__(self):
         pass
 
@@ -82,36 +83,30 @@ class LocalBash:
         try:
             # Execute command
             result = subprocess.run(
-                command,
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=30
+                command, shell=True, capture_output=True, text=True, timeout=30
             )
-            
+
             output = ""
             if result.stdout:
                 output += f"STDOUT:\n{result.stdout}\n"
             if result.stderr:
                 output += f"STDERR:\n{result.stderr}\n"
-            
+
             return {
                 "status": "success",
-                "data": output if output else "Command executed successfully with no output.",
-                "message": "Execution complete"
+                "data": output
+                if output
+                else "Command executed successfully with no output.",
+                "message": "Execution complete",
             }
 
         except subprocess.TimeoutExpired:
+            return {"status": "error", "data": None, "message": "Command timed out."}
+        except Exception as e:
             return {
                 "status": "error",
                 "data": None,
-                "message": "Command timed out."
-            }
-        except Exception as e:
-             return {
-                "status": "error",
-                "data": None,
-                "message": f"Execution error: {str(e)}"
+                "message": f"Execution error: {str(e)}",
             }
 
     def get_tool(self) -> Tool:

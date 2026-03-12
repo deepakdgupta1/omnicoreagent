@@ -1,4 +1,3 @@
-import json
 import os
 from typing import Any, Dict, Optional
 from omnicoreagent.core.tools.local_tools_registry import Tool
@@ -8,14 +7,19 @@ try:
 except ImportError:
     tweepy = None
 
+
 class XBase:
     def __init__(self, bearer_token: Optional[str] = None, **kwargs):
         self.bearer_token = bearer_token or os.getenv("X_BEARER_TOKEN")
         self.consumer_key = kwargs.get("consumer_key") or os.getenv("X_CONSUMER_KEY")
-        self.consumer_secret = kwargs.get("consumer_secret") or os.getenv("X_CONSUMER_SECRET")
+        self.consumer_secret = kwargs.get("consumer_secret") or os.getenv(
+            "X_CONSUMER_SECRET"
+        )
         self.access_token = kwargs.get("access_token") or os.getenv("X_ACCESS_TOKEN")
-        self.access_token_secret = kwargs.get("access_token_secret") or os.getenv("X_ACCESS_TOKEN_SECRET")
-        
+        self.access_token_secret = kwargs.get("access_token_secret") or os.getenv(
+            "X_ACCESS_TOKEN_SECRET"
+        )
+
         if tweepy is None:
             raise ImportError(
                 "Could not import `tweepy` python package. "
@@ -24,7 +28,7 @@ class XBase:
 
     def _get_client(self):
         try:
-             return tweepy.Client(
+            return tweepy.Client(
                 bearer_token=self.bearer_token,
                 consumer_key=self.consumer_key,
                 consumer_secret=self.consumer_secret,
@@ -34,6 +38,7 @@ class XBase:
         except Exception as e:
             raise ValueError(f"Error creating X client: {e}")
 
+
 class XCreatePost(XBase):
     def get_tool(self) -> Tool:
         return Tool(
@@ -42,7 +47,10 @@ class XCreatePost(XBase):
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "text": {"type": "string", "description": "The text content of the tweet."},
+                    "text": {
+                        "type": "string",
+                        "description": "The text content of the tweet.",
+                    },
                 },
                 "required": ["text"],
             },
@@ -56,14 +64,15 @@ class XCreatePost(XBase):
             return {
                 "status": "success",
                 "data": response.data,
-                "message": f"Posted successfully. ID: {response.data.get('id')}"
+                "message": f"Posted successfully. ID: {response.data.get('id')}",
             }
         except Exception as e:
             return {
                 "status": "error",
                 "data": None,
-                "message": f"Error creating post: {str(e)}"
+                "message": f"Error creating post: {str(e)}",
             }
+
 
 class XSearchPosts(XBase):
     def get_tool(self) -> Tool:
@@ -74,7 +83,11 @@ class XSearchPosts(XBase):
                 "type": "object",
                 "properties": {
                     "query": {"type": "string", "description": "Search query."},
-                    "max_results": {"type": "integer", "description": "Max results (10-100).", "default": 10},
+                    "max_results": {
+                        "type": "integer",
+                        "description": "Max results (10-100).",
+                        "default": 10,
+                    },
                 },
                 "required": ["query"],
             },
@@ -86,29 +99,24 @@ class XSearchPosts(XBase):
             client = self._get_client()
             limit = max(10, min(max_results, 100))
             response = client.search_recent_tweets(
-                query=query, 
-                max_results=limit,
-                tweet_fields=["created_at", "author_id"]
+                query=query, max_results=limit, tweet_fields=["created_at", "author_id"]
             )
-            
-            if not response.data:
-                return {
-                    "status": "success",
-                    "data": [],
-                    "message": "No tweets found."
-                }
 
-            tweets = [{"id": t.id, "text": t.text, "created_at": str(t.created_at)} for t in response.data]
-            formatted = "\n---\n".join([f"{t['text']} ({t['created_at']})" for t in tweets])
-            
-            return {
-                "status": "success",
-                "data": tweets,
-                "message": formatted
-            }
+            if not response.data:
+                return {"status": "success", "data": [], "message": "No tweets found."}
+
+            tweets = [
+                {"id": t.id, "text": t.text, "created_at": str(t.created_at)}
+                for t in response.data
+            ]
+            formatted = "\n---\n".join(
+                [f"{t['text']} ({t['created_at']})" for t in tweets]
+            )
+
+            return {"status": "success", "data": tweets, "message": formatted}
         except Exception as e:
-             return {
+            return {
                 "status": "error",
                 "data": None,
-                "message": f"Error searching posts: {str(e)}"
+                "message": f"Error searching posts: {str(e)}",
             }

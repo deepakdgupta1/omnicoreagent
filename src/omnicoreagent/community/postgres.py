@@ -1,6 +1,5 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug, log_error, logger
 
 try:
     import psycopg
@@ -11,6 +10,7 @@ except ImportError:
     sql = None
     dict_row = None
 
+
 class PostgresBase:
     def __init__(
         self,
@@ -20,10 +20,12 @@ class PostgresBase:
         host: Optional[str] = None,
         port: Optional[int] = None,
         table_schema: str = "public",
-        connection: Optional[Any] = None
+        connection: Optional[Any] = None,
     ):
         if psycopg is None:
-             raise ImportError("psycopg not installed. Please install it using `pip install psycopg[binary]`.")
+            raise ImportError(
+                "psycopg not installed. Please install it using `pip install psycopg[binary]`."
+            )
         self.db_name = db_name
         self.user = user
         self.password = password
@@ -36,9 +38,9 @@ class PostgresBase:
         if self._connection and not self._connection.closed:
             return self._connection
         if not all([self.db_name, self.user, self.host]):
-             # If params missing, rely on caller to have provided connection or env vars
-             # but standard refactor implies usage.
-             pass
+            # If params missing, rely on caller to have provided connection or env vars
+            # but standard refactor implies usage.
+            pass
 
         conn_kwargs = {
             "dbname": self.db_name,
@@ -47,13 +49,14 @@ class PostgresBase:
             "host": self.host,
             "port": self.port,
             "row_factory": dict_row,
-            "options": f"-c search_path={self.table_schema}"
+            "options": f"-c search_path={self.table_schema}",
         }
         # Filter None
         conn_kwargs = {k: v for k, v in conn_kwargs.items() if v is not None}
-        
+
         self._connection = psycopg.connect(**conn_kwargs)
         return self._connection
+
 
 class PostgresShowTables(PostgresBase):
     def get_tool(self) -> Tool:
@@ -73,16 +76,17 @@ class PostgresShowTables(PostgresBase):
             with conn.cursor() as cur:
                 cur.execute(
                     "SELECT table_name FROM information_schema.tables WHERE table_schema = %s;",
-                    (self.table_schema,)
+                    (self.table_schema,),
                 )
-                tables = [row['table_name'] for row in cur.fetchall()]
+                tables = [row["table_name"] for row in cur.fetchall()]
                 return {
-                    "status": "success", 
-                    "data": tables, 
-                    "message": f"Tables: {', '.join(tables)}"
+                    "status": "success",
+                    "data": tables,
+                    "message": f"Tables: {', '.join(tables)}",
                 }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class PostgresRunQuery(PostgresBase):
     def get_tool(self) -> Tool:
@@ -110,13 +114,13 @@ class PostgresRunQuery(PostgresBase):
                     return {
                         "status": "success",
                         "data": data,
-                        "message": f"Returned {len(data)} rows"
+                        "message": f"Returned {len(data)} rows",
                     }
                 else:
                     return {
-                        "status": "success", 
-                        "data": None, 
-                        "message": "Query executed"
+                        "status": "success",
+                        "data": None,
+                        "message": "Query executed",
                     }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

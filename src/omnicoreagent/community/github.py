@@ -1,14 +1,13 @@
-import json
 import os
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, Optional
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import logger
 
 try:
     from github import Github, Auth
 except ImportError:
     Github = None
     Auth = None
+
 
 class GithubBase:
     def __init__(self, access_token: Optional[str] = None):
@@ -27,6 +26,7 @@ class GithubBase:
             return Github(auth=auth)
         except Exception as e:
             raise e
+
 
 class GithubSearchRepos(GithubBase):
     def get_tool(self) -> Tool:
@@ -50,19 +50,22 @@ class GithubSearchRepos(GithubBase):
             repos = g.search_repositories(query=query)
             results = []
             for repo in repos[:limit]:
-                 results.append({
-                     "full_name": repo.full_name,
-                     "description": repo.description,
-                     "url": repo.html_url,
-                     "stars": repo.stargazers_count,
-                 })
+                results.append(
+                    {
+                        "full_name": repo.full_name,
+                        "description": repo.description,
+                        "url": repo.html_url,
+                        "stars": repo.stargazers_count,
+                    }
+                )
             return {
                 "status": "success",
                 "data": results,
-                "message": f"Found {len(results)} repositories."
+                "message": f"Found {len(results)} repositories.",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class GithubCreateIssue(GithubBase):
     def get_tool(self) -> Tool:
@@ -81,7 +84,9 @@ class GithubCreateIssue(GithubBase):
             function=self._create_issue,
         )
 
-    async def _create_issue(self, repo_name: str, title: str, body: Optional[str] = "") -> Dict[str, Any]:
+    async def _create_issue(
+        self, repo_name: str, title: str, body: Optional[str] = ""
+    ) -> Dict[str, Any]:
         try:
             g = self._get_client()
             repo = g.get_repo(repo_name)
@@ -89,10 +94,11 @@ class GithubCreateIssue(GithubBase):
             return {
                 "status": "success",
                 "data": {"number": issue.number, "url": issue.html_url},
-                "message": f"Created issue #{issue.number}"
+                "message": f"Created issue #{issue.number}",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class GithubGetRepository(GithubBase):
     def get_tool(self) -> Tool:
@@ -100,11 +106,11 @@ class GithubGetRepository(GithubBase):
             name="github_get_repository",
             description="Get details of a specific repository.",
             inputSchema={
-                 "type": "object",
-                 "properties": {
-                     "repo_name": {"type": "string"},
-                 },
-                 "required": ["repo_name"],
+                "type": "object",
+                "properties": {
+                    "repo_name": {"type": "string"},
+                },
+                "required": ["repo_name"],
             },
             function=self._get_repo,
         )
@@ -124,7 +130,7 @@ class GithubGetRepository(GithubBase):
             return {
                 "status": "success",
                 "data": data,
-                "message": f"Found repository: {repo.full_name}"
+                "message": f"Found repository: {repo.full_name}",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

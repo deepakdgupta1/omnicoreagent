@@ -1,10 +1,9 @@
 import json
 from typing import Any, Dict, List, Optional
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import parse_qs, urlparse
 from urllib.request import urlopen
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug
 
 try:
     from youtube_transcript_api import YouTubeTranscriptApi
@@ -12,11 +11,16 @@ except ImportError:
     YouTubeTranscriptApi = None
 
 
-
 class YouTubeTools:
-    def __init__(self, languages: Optional[List[str]] = None, proxies: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        languages: Optional[List[str]] = None,
+        proxies: Optional[Dict[str, Any]] = None,
+    ):
         if YouTubeTranscriptApi is None:
-            raise ImportError("`youtube_transcript_api` not installed. Please install using `pip install youtube_transcript_api`")
+            raise ImportError(
+                "`youtube_transcript_api` not installed. Please install using `pip install youtube_transcript_api`"
+            )
         self.languages = languages
         self.proxies = proxies
 
@@ -51,7 +55,11 @@ class YouTubeTools:
         try:
             video_id = self.get_video_id(url)
             if not video_id:
-                return {"status": "error", "data": None, "message": "Could not extract video ID"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": "Could not extract video ID",
+                }
             kwargs: Dict[str, Any] = {}
             if self.languages:
                 kwargs["languages"] = self.languages
@@ -85,7 +93,11 @@ class YouTubeGetVideoData(YouTubeTools):
         try:
             video_id = self.get_video_id(url)
             if not video_id:
-                return {"status": "error", "data": None, "message": "Could not extract video ID"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": "Could not extract video ID",
+                }
             oembed_url = f"https://www.youtube.com/oembed?format=json&url=https://www.youtube.com/watch?v={video_id}"
             with urlopen(oembed_url) as response:
                 video_data = json.loads(response.read().decode())
@@ -95,7 +107,11 @@ class YouTubeGetVideoData(YouTubeTools):
                 "author_url": video_data.get("author_url"),
                 "thumbnail_url": video_data.get("thumbnail_url"),
             }
-            return {"status": "success", "data": clean, "message": "Video data retrieved"}
+            return {
+                "status": "success",
+                "data": clean,
+                "message": "Video data retrieved",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -119,7 +135,11 @@ class YouTubeGetTimestamps(YouTubeTools):
         try:
             video_id = self.get_video_id(url)
             if not video_id:
-                return {"status": "error", "data": None, "message": "Could not extract video ID"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": "Could not extract video ID",
+                }
             kwargs: Dict[str, Any] = {}
             if self.languages:
                 kwargs["languages"] = self.languages
@@ -132,6 +152,10 @@ class YouTubeGetTimestamps(YouTubeTools):
                 minutes, seconds = divmod(start, 60)
                 timestamps.append(f"{minutes}:{seconds:02d} - {line.text}")
             text = "\n".join(timestamps)
-            return {"status": "success", "data": text, "message": "Timestamps generated"}
+            return {
+                "status": "success",
+                "data": text,
+                "message": "Timestamps generated",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

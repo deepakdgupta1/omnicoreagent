@@ -1,6 +1,5 @@
 from os import getenv
-from typing import Any, Dict, Optional, Union
-from uuid import uuid4
+from typing import Any, Dict, Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
 from omnicoreagent.core.utils import logger
@@ -9,6 +8,7 @@ try:
     import fal_client
 except ImportError:
     fal_client = None
+
 
 class FalBase:
     def __init__(self, api_key: Optional[str] = None):
@@ -28,8 +28,11 @@ class FalBase:
                     logger.info(message)
                     self.seen_logs.add(message)
 
+
 class FalGenerateMedia(FalBase):
-    def __init__(self, api_key: Optional[str] = None, model: str = "fal-ai/hunyuan-video"):
+    def __init__(
+        self, api_key: Optional[str] = None, model: str = "fal-ai/hunyuan-video"
+    ):
         super().__init__(api_key)
         self.model = model
 
@@ -49,7 +52,7 @@ class FalGenerateMedia(FalBase):
 
     async def _generate(self, prompt: str) -> Dict[str, Any]:
         if not self.api_key:
-             return {"status": "error", "data": None, "message": "FAL_API_KEY not set"}
+            return {"status": "error", "data": None, "message": "FAL_API_KEY not set"}
 
         try:
             result = fal_client.subscribe(
@@ -66,17 +69,22 @@ class FalGenerateMedia(FalBase):
             elif "video" in result:
                 media_data["type"] = "video"
                 media_data["url"] = result.get("video", {}).get("url", "")
-            
+
             return {
                 "status": "success",
                 "data": media_data,
-                "message": f"Media generated: {media_data.get('url')}"
+                "message": f"Media generated: {media_data.get('url')}",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
 
+
 class FalImageToImage(FalBase):
-    def __init__(self, api_key: Optional[str] = None, model: str = "fal-ai/flux/dev/image-to-image"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "fal-ai/flux/dev/image-to-image",
+    ):
         super().__init__(api_key)
         self.model = model
 
@@ -97,7 +105,7 @@ class FalImageToImage(FalBase):
 
     async def _generate(self, prompt: str, image_url: str) -> Dict[str, Any]:
         if not self.api_key:
-             return {"status": "error", "data": None, "message": "FAL_API_KEY not set"}
+            return {"status": "error", "data": None, "message": "FAL_API_KEY not set"}
 
         try:
             result = fal_client.subscribe(
@@ -106,12 +114,12 @@ class FalImageToImage(FalBase):
                 with_logs=True,
                 on_queue_update=self.on_queue_update,
             )
-            
+
             url = result.get("images", [{}])[0].get("url", "")
             return {
                 "status": "success",
                 "data": {"url": url},
-                "message": f"Image generated: {url}"
+                "message": f"Image generated: {url}",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

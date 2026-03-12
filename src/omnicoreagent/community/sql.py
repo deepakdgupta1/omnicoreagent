@@ -1,8 +1,6 @@
-import json
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
-from omnicoreagent.core.utils import log_debug, logger
 
 try:
     from sqlalchemy import Engine, create_engine, text, inspect
@@ -15,6 +13,7 @@ except ImportError:
     Session = None
     sessionmaker = None
 
+
 class SQLBase:
     def __init__(
         self,
@@ -24,13 +23,16 @@ class SQLBase:
         self.db_engine = db_engine
         if not self.db_engine and db_url:
             if create_engine is None:
-                 raise ImportError("sqlalchemy not installed. Please install it using `pip install sqlalchemy`.")
+                raise ImportError(
+                    "sqlalchemy not installed. Please install it using `pip install sqlalchemy`."
+                )
             else:
                 self.db_engine = create_engine(db_url)
-        
+
         if not self.db_engine:
-             # Allow lazy init or failure depending on usage
-             pass
+            # Allow lazy init or failure depending on usage
+            pass
+
 
 class SQLListTables(SQLBase):
     def get_tool(self) -> Tool:
@@ -51,10 +53,11 @@ class SQLListTables(SQLBase):
             return {
                 "status": "success",
                 "data": tables,
-                "message": f"Tables: {', '.join(tables)}"
+                "message": f"Tables: {', '.join(tables)}",
             }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}
+
 
 class SQLRunQuery(SQLBase):
     def get_tool(self) -> Tool:
@@ -82,13 +85,13 @@ class SQLRunQuery(SQLBase):
                     return {
                         "status": "success",
                         "data": data,
-                        "message": f"Returned {len(data)} rows"
+                        "message": f"Returned {len(data)} rows",
                     }
                 else:
                     return {
                         "status": "success",
                         "data": None,
-                        "message": "Query executed (no rows returned)"
+                        "message": "Query executed (no rows returned)",
                     }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

@@ -1,6 +1,4 @@
-import json
 from typing import Any, Dict, Optional
-from uuid import uuid4
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
 from omnicoreagent.core.utils import log_debug, logger
@@ -9,7 +7,6 @@ try:
     import newspaper
 except ImportError:
     newspaper = None
-
 
 
 class NewsArticleRead:
@@ -21,7 +18,9 @@ class NewsArticleRead:
         article_length: Optional[int] = None,
     ):
         if newspaper is None:
-            raise ImportError("`newspaper4k` not installed. Please install using `pip install newspaper4k`")
+            raise ImportError(
+                "`newspaper4k` not installed. Please install using `pip install newspaper4k`"
+            )
         self.include_summary = include_summary
         self.article_length = article_length
 
@@ -32,7 +31,10 @@ class NewsArticleRead:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "url": {"type": "string", "description": "The URL of the news article"},
+                    "url": {
+                        "type": "string",
+                        "description": "The URL of the news article",
+                    },
                 },
                 "required": ["url"],
             },
@@ -66,11 +68,19 @@ class NewsArticleRead:
             log_debug(f"Reading news: {url}")
             article_data = self._get_article_data(url)
             if not article_data:
-                return {"status": "error", "data": None, "message": f"Could not read article from {url}"}
+                return {
+                    "status": "error",
+                    "data": None,
+                    "message": f"Could not read article from {url}",
+                }
 
             if self.article_length and "text" in article_data:
                 article_data["text"] = article_data["text"][: self.article_length]
 
-            return {"status": "success", "data": article_data, "message": "Article read successfully"}
+            return {
+                "status": "success",
+                "data": article_data,
+                "message": "Article read successfully",
+            }
         except Exception as e:
             return {"status": "error", "data": None, "message": str(e)}

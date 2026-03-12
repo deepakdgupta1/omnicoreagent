@@ -9,7 +9,7 @@ Middleware configuration and factories for:
 """
 
 import time
-from typing import Callable, Optional
+from typing import Callable
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,7 +39,9 @@ def add_cors_middleware(app: FastAPI, config: OmniServeConfig) -> None:
         allow_methods=config.cors_methods,
         allow_headers=config.cors_headers,
     )
-    logger.info(f"OmniServe: CORS middleware enabled for origins: {config.cors_origins}")
+    logger.info(
+        f"OmniServe: CORS middleware enabled for origins: {config.cors_origins}"
+    )
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -98,7 +100,13 @@ class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Validate Bearer token."""
         # Skip auth for health endpoints
-        if request.url.path in ["/health", "/ready", "/docs", "/redoc", "/openapi.json"]:
+        if request.url.path in [
+            "/health",
+            "/ready",
+            "/docs",
+            "/redoc",
+            "/openapi.json",
+        ]:
             return await call_next(request)
 
         # Get Authorization header
@@ -193,4 +201,3 @@ def setup_all_middleware(app: FastAPI, config: OmniServeConfig) -> None:
     add_request_logging_middleware(app, config)
     add_auth_middleware(app, config)
     add_cors_middleware(app, config)
-

@@ -1,6 +1,6 @@
 import re
 from os import getenv
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from omnicoreagent.core.tools.local_tools_registry import Tool
 from omnicoreagent.core.utils import log_info, logger
@@ -11,7 +11,6 @@ try:
 except ImportError:
     TwilioRestException = None
     Client = None
-
 
 
 class TwilioTools:
@@ -41,11 +40,21 @@ class TwilioTools:
             )
 
         if self.api_key and self.api_secret:
-            self.client = Client(self.api_key, self.api_secret, self.account_sid, region=self.region, edge=self.edge)
+            self.client = Client(
+                self.api_key,
+                self.api_secret,
+                self.account_sid,
+                region=self.region,
+                edge=self.edge,
+            )
         elif self.auth_token:
-            self.client = Client(self.account_sid, self.auth_token, region=self.region, edge=self.edge)
+            self.client = Client(
+                self.account_sid, self.auth_token, region=self.region, edge=self.edge
+            )
         else:
-            logger.error("Neither auth_token nor api_key+api_secret provided for Twilio.")
+            logger.error(
+                "Neither auth_token nor api_key+api_secret provided for Twilio."
+            )
             self.client = None
 
     @staticmethod
@@ -59,8 +68,14 @@ class TwilioTools:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "to": {"type": "string", "description": "Recipient phone (E.164 format)"},
-                    "from_": {"type": "string", "description": "Sender Twilio phone (E.164 format)"},
+                    "to": {
+                        "type": "string",
+                        "description": "Recipient phone (E.164 format)",
+                    },
+                    "from_": {
+                        "type": "string",
+                        "description": "Sender Twilio phone (E.164 format)",
+                    },
                     "body": {"type": "string"},
                 },
                 "required": ["to", "from_", "body"],
@@ -70,15 +85,31 @@ class TwilioTools:
 
     async def _send_sms(self, to: str, from_: str, body: str) -> Dict[str, Any]:
         if not self.client:
-            return {"status": "error", "data": None, "message": "Twilio client not initialized"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "Twilio client not initialized",
+            }
         if not self.validate_phone_number(to):
-            return {"status": "error", "data": None, "message": "'to' must be E.164 format"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "'to' must be E.164 format",
+            }
         if not self.validate_phone_number(from_):
-            return {"status": "error", "data": None, "message": "'from_' must be E.164 format"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "'from_' must be E.164 format",
+            }
         try:
             message = self.client.messages.create(to=to, from_=from_, body=body)
             log_info(f"SMS sent. SID: {message.sid}")
-            return {"status": "success", "data": {"sid": message.sid}, "message": f"SMS sent to {to}"}
+            return {
+                "status": "success",
+                "data": {"sid": message.sid},
+                "message": f"SMS sent to {to}",
+            }
         except TwilioRestException as e:
             logger.error(f"Failed to send SMS: {e}")
             return {"status": "error", "data": None, "message": str(e)}
@@ -99,15 +130,28 @@ class TwilioGetCallDetails(TwilioTools):
 
     async def _get_call_details(self, call_sid: str) -> Dict[str, Any]:
         if not self.client:
-            return {"status": "error", "data": None, "message": "Twilio client not initialized"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "Twilio client not initialized",
+            }
         try:
             call = self.client.calls(call_sid).fetch()
             data = {
-                "to": call.to, "from": call.from_, "status": call.status,
-                "duration": call.duration, "direction": call.direction,
-                "price": call.price, "start_time": str(call.start_time), "end_time": str(call.end_time),
+                "to": call.to,
+                "from": call.from_,
+                "status": call.status,
+                "duration": call.duration,
+                "direction": call.direction,
+                "price": call.price,
+                "start_time": str(call.start_time),
+                "end_time": str(call.end_time),
             }
-            return {"status": "success", "data": data, "message": "Call details retrieved"}
+            return {
+                "status": "success",
+                "data": data,
+                "message": "Call details retrieved",
+            }
         except TwilioRestException as e:
             return {"status": "error", "data": None, "message": str(e)}
 
@@ -126,14 +170,28 @@ class TwilioListMessages(TwilioTools):
 
     async def _list_messages(self, limit: int = 20) -> Dict[str, Any]:
         if not self.client:
-            return {"status": "error", "data": None, "message": "Twilio client not initialized"}
+            return {
+                "status": "error",
+                "data": None,
+                "message": "Twilio client not initialized",
+            }
         try:
             messages = []
             for msg in self.client.messages.list(limit=limit):
-                messages.append({
-                    "sid": msg.sid, "to": msg.to, "from": msg.from_,
-                    "body": msg.body, "status": msg.status, "date_sent": str(msg.date_sent),
-                })
-            return {"status": "success", "data": messages, "message": f"Retrieved {len(messages)} messages"}
+                messages.append(
+                    {
+                        "sid": msg.sid,
+                        "to": msg.to,
+                        "from": msg.from_,
+                        "body": msg.body,
+                        "status": msg.status,
+                        "date_sent": str(msg.date_sent),
+                    }
+                )
+            return {
+                "status": "success",
+                "data": messages,
+                "message": f"Retrieved {len(messages)} messages",
+            }
         except TwilioRestException as e:
             return {"status": "error", "data": None, "message": str(e)}

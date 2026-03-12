@@ -1,6 +1,5 @@
-import json
 import os
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, Optional
 from omnicoreagent.core.tools.local_tools_registry import Tool
 
 try:
@@ -10,16 +9,20 @@ except ImportError:
     WebClient = None
     SlackApiError = None
 
+
 class SlackBase:
     def __init__(self, token: Optional[str] = None):
         if WebClient is None:
-             raise ImportError("Slack tools require the `slack_sdk` package. Please install it using `pip install slack_sdk`.")
+            raise ImportError(
+                "Slack tools require the `slack_sdk` package. Please install it using `pip install slack_sdk`."
+            )
         self.token = token or os.getenv("SLACK_TOKEN")
-    
+
     def _get_client(self):
         if not self.token:
             raise ValueError("SLACK_TOKEN is not set")
         return WebClient(token=self.token)
+
 
 class SlackSendMessage(SlackBase):
     def get_tool(self) -> Tool:
@@ -44,14 +47,15 @@ class SlackSendMessage(SlackBase):
             return {
                 "status": "success",
                 "data": response.data,
-                "message": f"Message sent to {channel}"
+                "message": f"Message sent to {channel}",
             }
         except Exception as e:
             return {
                 "status": "error",
                 "data": None,
-                "message": f"Error sending Slack message: {str(e)}"
+                "message": f"Error sending Slack message: {str(e)}",
             }
+
 
 class SlackListChannels(SlackBase):
     def get_tool(self) -> Tool:
@@ -69,19 +73,22 @@ class SlackListChannels(SlackBase):
         try:
             client = self._get_client()
             response = client.conversations_list(types="public_channel")
-            channels = [{"id": c["id"], "name": c["name"]} for c in response["channels"]]
+            channels = [
+                {"id": c["id"], "name": c["name"]} for c in response["channels"]
+            ]
             formatted = "\n".join([f"#{c['name']} ({c['id']})" for c in channels])
             return {
                 "status": "success",
                 "data": channels,
-                "message": f"Channels:\n{formatted}"
+                "message": f"Channels:\n{formatted}",
             }
         except Exception as e:
             return {
                 "status": "error",
                 "data": None,
-                "message": f"Error listing channels: {str(e)}"
+                "message": f"Error listing channels: {str(e)}",
             }
+
 
 class SlackGetHistory(SlackBase):
     def get_tool(self) -> Tool:
@@ -91,8 +98,12 @@ class SlackGetHistory(SlackBase):
             inputSchema={
                 "type": "object",
                 "properties": {
-                     "channel": {"type": "string", "description": "Channel ID."},
-                     "limit": {"type": "integer", "description": "Max messages.", "default": 20},
+                    "channel": {"type": "string", "description": "Channel ID."},
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max messages.",
+                        "default": 20,
+                    },
                 },
                 "required": ["channel"],
             },
@@ -105,20 +116,19 @@ class SlackGetHistory(SlackBase):
             response = client.conversations_history(channel=channel, limit=limit)
             messages = []
             for msg in response.get("messages", []):
-                messages.append({
-                    "user": msg.get("user", "unknown"),
-                    "text": msg.get("text", "")
-                })
-            
+                messages.append(
+                    {"user": msg.get("user", "unknown"), "text": msg.get("text", "")}
+                )
+
             formatted = "\n".join([f"{m['user']}: {m['text']}" for m in messages])
             return {
                 "status": "success",
                 "data": messages,
-                "message": f"History:\n{formatted}"
+                "message": f"History:\n{formatted}",
             }
         except Exception as e:
             return {
                 "status": "error",
                 "data": None,
-                "message": f"Error getting history: {str(e)}"
+                "message": f"Error getting history: {str(e)}",
             }
