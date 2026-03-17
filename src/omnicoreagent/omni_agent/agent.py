@@ -97,6 +97,7 @@ class OmniCoreAgent:
         self.llm_connection = None
         self.internal_config = None
         self.guardrail = None
+        self.guardrail_mode = "full"  # Default: full protection
 
         self._initialized = False
 
@@ -114,10 +115,23 @@ class OmniCoreAgent:
         self.internal_config = self._create_internal_config()
 
         agent_cfg = self.internal_config.get("AgentConfig", {})
-        if agent_cfg.get("guardrail_config"):
-            logger.info(f"Guardrail enabled for agent: {self.name}")
-            g_config = DetectionConfig(**agent_cfg["guardrail_config"])
+
+        # Guardrail mode: "full" (default), "input_only", or "off"
+        # "full" = check user input + tool outputs + MCP responses
+        # "input_only" = check user input only (legacy behavior)
+        # "off" = no guardrail protection
+        self.guardrail_mode = agent_cfg.get("guardrail_mode", "full")
+
+        if self.guardrail_mode != "off":
+            guardrail_config = agent_cfg.get("guardrail_config", {})
+            g_config = DetectionConfig(**guardrail_config)
             self.guardrail = PromptInjectionGuard(g_config)
+            logger.info(
+                f"Guardrail enabled for agent '{self.name}' "
+                f"(mode: {self.guardrail_mode})"
+            )
+        else:
+            logger.info(f"Guardrail disabled for agent '{self.name}'")
 
         self._create_agent()
         self._initialized = True
@@ -214,7 +228,11 @@ class OmniCoreAgent:
                 else None,
             )
 
-        self.agent = ReactAgent(config=agent_settings, guardrail=self.guardrail)
+        # Pass guardrail to ReactAgent only in "full" mode
+        # In "full" mode, tool outputs and MCP responses are scrubbed
+        # In "input_only" mode, only user input is checked (at OmniAgent.run level)
+        tool_guardrail = self.guardrail if self.guardrail_mode == "full" else None
+        self.agent = ReactAgent(config=agent_settings, guardrail=tool_guardrail)
         if self.local_tools:
             if self.agent.enable_advanced_tool_use:
                 advance_tools_manager = AdvanceToolsUse()
