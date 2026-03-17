@@ -88,6 +88,7 @@ from omnicoreagent.core.tool_response_offloader import (
     ToolResponseOffloader,
     OffloadConfig,
 )
+from omnicoreagent.core.guardrails import PromptInjectionGuard
 
 
 class BaseReactAgent:
@@ -105,6 +106,7 @@ class BaseReactAgent:
         enable_agent_skills: bool = False,
         context_management_config: dict = None,
         tool_offload_config: dict = None,
+        guardrail: PromptInjectionGuard | None = None,
     ):
         self.agent_name = agent_name
         self.max_steps = max(max_steps, 5)
@@ -138,6 +140,7 @@ class BaseReactAgent:
         self.tool_offloader = ToolResponseOffloader(
             config=OffloadConfig.from_dict(tool_offload_config or {})
         )
+        self.guardrail = guardrail
 
     def init_skills(self):
         if self.enable_agent_skills:
@@ -160,6 +163,54 @@ class BaseReactAgent:
                 pending_tool_responses=[],
             )
         return self._session_states[key]
+
+    def _scrub_tool_results(
+        self, tools_results: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """Scrub tool output through guardrails before it enters LLM context.
+
+        Checks each tool result's data and message fields for prompt injection.
+        If a threat is detected at DANGEROUS or CRITICAL level, the tool result
+        is replaced with a sanitized warning. SUSPICIOUS results are logged but
+        passed through.
+
+        Args:
+            tools_results: List of tool result dicts with data/message fields.
+
+        Returns:
+            The tools_results list, potentially with dangerous content replaced.
+        """
+        if not self.guardrail:
+            return tools_results
+
+        for result in tools_results:
+            for field in ("data", "message"):
+                content = result.get(field)
+                if content is None:
+                    continue
+                text = str(content) if not isinstance(content, str) else content
+                if not text.strip():
+                    continue
+
+                check = self.guardrail.check(text)
+                if check.threat_level.value in ("dangerous", "critical"):
+                    tool_name = result.get("tool_name", "unknown")
+                    logger.warning(
+                        f"Guardrail blocked tool output from '{tool_name}': "
+                        f"{check.threat_level.value} (score: {check.threat_score})"
+                    )
+                    result[field] = (
+                        f"[Tool output blocked by guardrail: {check.message}]"
+                    )
+                    result["status"] = "error"
+                elif check.threat_level.value == "suspicious":
+                    tool_name = result.get("tool_name", "unknown")
+                    logger.info(
+                        f"Guardrail flagged suspicious tool output from '{tool_name}': "
+                        f"score={check.threat_score}"
+                    )
+
+        return tools_results
 
     async def extract_action_or_answer(
         self,
@@ -1015,6 +1066,7 @@ class BaseReactAgent:
                 observation=obs_text,
             )
 
+        tools_results = self._scrub_tool_results(tools_results)
         xml_obs_block = build_xml_observations_block(tools_results)
         session_state.messages.append(
             Message(
@@ -1801,7 +1853,7 @@ class BaseReactAgent:
                             message_content = response.content
                         else:
                             message_content = str(response)
-                        
+
                         event = Event(
                             type=EventType.AGENT_MESSAGE,
                             payload=AgentMessagePayload(

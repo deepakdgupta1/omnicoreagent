@@ -68,14 +68,15 @@ class OmniCoreAgent:
         self.system_instruction = system_instruction
         self.model_config = model_config
         self.mcp_tools = mcp_tools or []
-        
+
         # Handle local_tools: optionally convert list to ToolRegistry
         if isinstance(local_tools, list):
-             from omnicoreagent.core.tools.local_tools_registry import ToolRegistry
-             registry = ToolRegistry()
-             for tool in local_tools:
-                 registry.register(tool)
-             self.local_tools = registry
+            from omnicoreagent.core.tools.local_tools_registry import ToolRegistry
+
+            registry = ToolRegistry()
+            for tool in local_tools:
+                registry.register(tool)
+            self.local_tools = registry
         else:
             self.local_tools = local_tools
 
@@ -106,7 +107,7 @@ class OmniCoreAgent:
 
         if not self.memory_router:
             self.memory_router = MemoryRouter(memory_store_type="in_memory")
-        
+
         if not self.event_router:
             self.event_router = EventRouter(event_store_type="in_memory")
 
@@ -175,8 +176,6 @@ class OmniCoreAgent:
                 },
             }
 
-
-
     def _create_agent(self):
         """Create the appropriate agent based on configuration"""
         shared_config = Configuration()
@@ -185,15 +184,20 @@ class OmniCoreAgent:
             self.mcp_client = MCPClient(
                 config=shared_config,
                 debug=self.debug,
-                config_filename=str(self._config_file_path) if hasattr(self, "_config_file_path") else "servers_config.json",
+                config_filename=str(self._config_file_path)
+                if hasattr(self, "_config_file_path")
+                else "servers_config.json",
                 loaded_config=self.internal_config,
             )
             self.llm_connection = self.mcp_client.llm_connection
         else:
             self.mcp_client = None
             self.llm_connection = LLMConnection(
-                shared_config, config_filename=str(self._config_file_path) if hasattr(self, "_config_file_path") else "servers_config.json",
-                loaded_config=self.internal_config
+                shared_config,
+                config_filename=str(self._config_file_path)
+                if hasattr(self, "_config_file_path")
+                else "servers_config.json",
+                loaded_config=self.internal_config,
             )
 
         agent_config_dict = self.internal_config["AgentConfig"]
@@ -210,7 +214,7 @@ class OmniCoreAgent:
                 else None,
             )
 
-        self.agent = ReactAgent(config=agent_settings)
+        self.agent = ReactAgent(config=agent_settings, guardrail=self.guardrail)
         if self.local_tools:
             if self.agent.enable_advanced_tool_use:
                 advance_tools_manager = AdvanceToolsUse()
@@ -389,7 +393,7 @@ class OmniCoreAgent:
         """List all available tools (MCP and local)"""
         if not self._initialized:
             await self.initialize()
-            
+
         available_tools = []
 
         if self.mcp_client:
