@@ -1,8 +1,13 @@
 import json
+import logging
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Any
 import asyncio
+
+from omnicoreagent.core.guardrails import PromptInjectionGuard
+
+logger = logging.getLogger(__name__)
 
 
 class BaseToolHandler(ABC):
@@ -26,9 +31,11 @@ class MCPToolHandler(BaseToolHandler):
         server_name: str = None,
         tool_data: str = None,
         mcp_tools: dict = None,
+        guardrail: PromptInjectionGuard | None = None,
     ):
         self.sessions = sessions
         self.server_name = server_name
+        self.guardrail = guardrail
 
         if self.server_name is None and tool_data and mcp_tools:
             self.server_name = self._infer_server_name(tool_data, mcp_tools)
@@ -93,7 +100,48 @@ class MCPToolHandler(BaseToolHandler):
 
     async def call(self, tool_name: str, tool_args: dict[str, Any]) -> Any:
         session = self.sessions[self.server_name]["session"]
-        return await session.call_tool(tool_name, tool_args)
+        result = await session.call_tool(tool_name, tool_args)
+        return self._scrub_mcp_result(tool_name, result)
+
+    def _scrub_mcp_result(self, tool_name: str, result: Any) -> Any:
+        """Scrub MCP tool result through guardrails at the client boundary.
+
+        Defense-in-depth: checks MCP responses before they reach the
+        tool executor aggregation layer. Only blocks DANGEROUS/CRITICAL.
+        """
+        if not self.guardrail:
+            return result
+
+        text = None
+        if hasattr(result, "content") and isinstance(result.content, list):
+            texts = [
+                getattr(item, "text", None)
+                for item in result.content
+                if hasattr(item, "text")
+            ]
+            text = " ".join(t for t in texts if t)
+        elif isinstance(result, dict):
+            text = str(result.get("data") or result.get("message") or "")
+        elif isinstance(result, str):
+            text = result
+
+        if not text or not text.strip():
+            return result
+
+        check = self.guardrail.check(text)
+        if check.threat_level.value in ("dangerous", "critical"):
+            logger.warning(
+                f"Guardrail blocked MCP response from '{tool_name}' on "
+                f"server '{self.server_name}': {check.threat_level.value} "
+                f"(score: {check.threat_score})"
+            )
+            return {
+                "status": "error",
+                "data": None,
+                "message": f"[MCP response blocked by guardrail: {check.message}]",
+            }
+
+        return result
 
 
 class LocalToolHandler(BaseToolHandler):
