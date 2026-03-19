@@ -563,6 +563,7 @@ class BaseReactAgent:
                                     sessions=sessions,
                                     tool_data=json.dumps(action),
                                     mcp_tools=mcp_tools,
+                                    guardrail=self.guardrail,
                                 )
                                 tool_executor = ToolExecutor(
                                     tool_handler=mcp_tool_handler

@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from typing import Any
 
+from omnicoreagent.core.guardrails import PromptInjectionGuard
 from omnicoreagent.core.token_usage import (
     Usage,
     UsageLimitExceeded,
@@ -89,6 +90,7 @@ async def read_resource(
     debug: bool = False,
     request_limit: int = None,
     total_tokens_limit: int = None,
+    guardrail: PromptInjectionGuard | None = None,
 ):
     """Read a resource"""
     if debug:
@@ -105,6 +107,17 @@ async def read_resource(
     logger.info(f"Resource found in {server_name}")
     try:
         resource_response = await sessions[server_name]["session"].read_resource(uri)
+
+        if guardrail:
+            resource_text = str(resource_response)
+            check = guardrail.check(resource_text)
+            if check.threat_level.value in ("dangerous", "critical"):
+                logger.warning(
+                    f"Guardrail blocked MCP resource '{uri}': "
+                    f"{check.threat_level.value} (score: {check.threat_score})"
+                )
+                return f"[Resource content blocked by guardrail: {check.message}]"
+
         if debug:
             logger.info("LLM processing resource")
         llm_response = await llm_call(
