@@ -1,0 +1,101 @@
+---
+title: Token Management & Limits
+description: 'Track token usage and implement hard limits for cost control'
+icon: 'coins'
+---
+
+# Token Management & Limits
+
+OmniCoreAgent provides built-in token usage tracking and enforcement to help you manage API costs predictably. You can monitor token spend per request and set strict limits to prevent runaway agents.
+
+---
+
+## Tracking Token Usage
+
+Every successful agent run returns a `metric` object containing detailed token usage for that specific invocation, tracked via the `Usage` class. 
+
+```python
+from omnicoreagent import OmniCoreAgent
+
+agent = OmniCoreAgent(
+    name="FinancialAgent",
+    system_instruction="You are a financial analyst.",
+    model_config={"provider": "openai", "model": "gpt-4o"}
+)
+
+result = await agent.run("Analyze Apple's Q3 earnings report.")
+
+# Access token metrics for this run
+metrics = result["metric"]
+print(f"Request Tokens: {metrics.request_tokens}")
+print(f"Response Tokens: {metrics.response_tokens}")
+print(f"Total Tokens Used: {metrics.total_tokens}")
+print(f"Time Taken: {metrics.total_time:.2f} seconds")
+```
+
+### Cumulative Metrics
+
+OmniCoreAgent maintains a cumulative count of all tokens consumed over its lifetime, which is useful for tracking session costs.
+
+```python
+# Returns total metrics accrued since the agent was initialized
+cumulative_stats = await agent.get_metrics()
+
+print(f"Total API Requests: {cumulative_stats['total_requests']}")
+print(f"Total Tokens: {cumulative_stats['total_tokens']}")
+```
+
+---
+
+## Enforcing Usage Limits
+
+You can configure strict token and request limits using `agent_config`. When a limit is hit, OmniCoreAgent will safely halt execution before incurring additional costs.
+
+### Available Limits
+
+| Config Key | Description | Default |
+|---|---|---|
+| `request_limit` | Maximum number of LLM API requests allowed per run. | `0` (unlimited) |
+| `request_tokens_limit` | Maximum token budget allowed for the input prompt (`request_tokens`). | `None` |
+| `response_tokens_limit` | Maximum token budget allowed for the generated completion. | `None` |
+| `total_tokens_limit` | Maximum combined prompt and completion tokens. | `0` (unlimited) |
+
+### Configuration Example
+
+```python
+agent_config = {
+    # Stop agent if it spins looping for too many API requests
+    "request_limit": 50,
+    
+    # Cap maximum token cost per turn
+    "total_tokens_limit": 100000 
+}
+
+agent = OmniCoreAgent(
+    name="BudgetAwareAgent",
+    system_instruction="You solve complex coding tasks.",
+    model_config={"provider": "anthropic", "model": "claude-3-5-sonnet-20241022"},
+    agent_config=agent_config
+)
+```
+
+---
+
+## Handling Limit Exceptions
+
+When an agent reaches or exceeds a configured token limit mid-execution, it raises a `UsageLimitExceeded` exception. It's crucial to catch this error gracefully in production.
+
+```python
+from omnicoreagent.core.token_usage import UsageLimitExceeded
+
+try:
+    result = await agent.run("Perform a highly complex task.")
+    
+except UsageLimitExceeded as error:
+    print(f"Agent stopped to prevent excessive spend: {error}")
+    # Fallback logic or user alert
+```
+
+<Tip>
+For production services, setting `request_limit` helps guard against scenarios where an agent continuously fails a tool call and retries in an infinite loop. 
+</Tip>

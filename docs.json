@@ -52,6 +52,7 @@
                             "docs/core-concepts/skills",
                             "docs/core-concepts/workspace-memory",
                             "docs/core-concepts/guardrails",
+                            "docs/core-concepts/token-management",
                             "docs/core-concepts/sub-agents",
                             "docs/core-concepts/background-agents",
                             "docs/core-concepts/deep-agent",
@@ -66,7 +67,8 @@
                             "docs/how-to-guides/advanced-tools",
                             "docs/how-to-guides/observability",
                             "docs/how-to-guides/models",
-                            "docs/how-to-guides/omniserve"
+                            "docs/how-to-guides/omniserve",
+                            "docs/how-to-guides/error-handling"
                         ]
                     },
                     {

@@ -31,7 +31,9 @@ nav:
     - Architecture: advanced/architecture.md
   - Configuration:
     - Configuration Guide: configuration/configuration-guide.md
+    - Token Management: configuration/token-management.md
   - Development:
+    - Error Handling: development/error-handling.md
     - Testing: development/testing.md
     - Contributing: development/contributing.md
   - Changelog: changelog.md

@@ -374,24 +374,59 @@ python server.py
 
 ---
 
-## Advanced: Resilience Patterns
+## Advanced: Middlewares and Resilience Patterns
 
-Import retry and circuit breaker for custom use:
+OmniServe supports complex production architectures out-of-the-box using the powerful `omnicoreagent.omni_agent.omni_serve` modules.
+
+### Customizing Middleware
+
+You can attach additional FastAPI middlewares directly to OmniServe before starting it. This is useful for injecting custom request IDs, custom logging, or additional authentication protocols.
+
+```python
+from fastapi.middleware.cors import CORSMiddleware
+from omnicoreagent import OmniServe
+
+server = OmniServe(agent, config=config)
+
+# Add your custom FastAPI middleware
+server.app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
+
+if __name__ == "__main__":
+    server.start()
+```
+
+### Circuit Breakers and HTTP Retry Backoff
+
+When a local tool communicates with brittle third-party APIs or a flaky database, import our custom `RetryConfig` and `CircuitBreaker`. This will prevent your agent from indefinitely hanging when external systems are down.
 
 ```python
 from omnicoreagent import RetryConfig, CircuitBreaker, with_retry
 
+# 1. Exponential Backoff Retry Pattern
 @with_retry(RetryConfig(max_retries=5, strategy="exponential"))
 async def call_external_api():
-    ...
+    # Flaky external API call
+    return await make_network_request()
 
-breaker = CircuitBreaker("api", failure_threshold=3, timeout=60)
-async with breaker:
-    result = await risky_call()
+# 2. Circuit Breaker Pattern
+breaker = CircuitBreaker("payment_api", failure_threshold=3, timeout=60)
+
+@tools.register_tool("charge_card")
+async def charge_card(amount: float):
+    # If the payment API fails 3 times, the breaker trips for 60 seconds
+    # Subsequent calls immediately return failure to the agent instead of blocking
+    async with breaker:
+        return await risky_payment_call(amount)
 ```
 
 <Tip>
-OmniServe is perfect for deploying agents as microservices, webhooks, chatbots, or any HTTP-accessible AI capability.
+OmniServe is perfect for deploying agents as highly available microservices. Using builtin Circuit Breakers prevents sweeping production outages.
 </Tip>
 
 ---
